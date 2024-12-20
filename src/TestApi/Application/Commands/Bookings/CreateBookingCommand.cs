@@ -1,6 +1,4 @@
-﻿using TestApi.Domain.Entities;
-
-namespace TestApi.Application.Commands.Bookings
+﻿namespace TestApi.Application.Commands.Bookings
 {
     public class CreateBookingCommand
     {

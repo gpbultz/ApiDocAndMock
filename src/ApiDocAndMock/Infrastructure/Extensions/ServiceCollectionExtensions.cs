@@ -1,7 +1,5 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
 using Microsoft.Extensions.DependencyInjection;
-using ApiDocAndMock.Application.Interfaces;
-using ApiDocAndMock.Infrastructure.Mocking;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {

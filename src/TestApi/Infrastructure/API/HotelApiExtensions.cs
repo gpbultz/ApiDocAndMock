@@ -1,9 +1,5 @@
-﻿
-
-using ApiDocAndMock.Application.Interfaces;
-using ApiDocAndMock.Infrastructure.Extensions;
+﻿using ApiDocAndMock.Infrastructure.Extensions;
 using ApiDocAndMock.Infrastructure.Mocking;
-using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
 

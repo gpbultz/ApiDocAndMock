@@ -1,5 +1,4 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
-using ApiDocAndMock.Infrastructure.Documentation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;

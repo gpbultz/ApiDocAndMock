@@ -41,7 +41,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                
+
                 var request = context.GetArgument<TRequest>(0);
 
                 var newId = generateId?.Invoke() ?? Guid.NewGuid();
@@ -99,7 +99,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                
+
                 var request = context.GetArgument<TRequest>(0);
 
                 var sourceIdProperty = request.GetType().GetProperty(sourceIdFieldName);
@@ -190,7 +190,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                
+
                 var idString = context.GetArgument<string>(0);
 
                 var idProperty = typeof(TStored).GetProperty(idFieldName);
@@ -299,7 +299,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 .AddEndpointFilter(async (context, next) =>
                 {
                     var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                    
+
                     var query = context.HttpContext.Request.Query;
                     var id = context.GetArgument<Guid>(0);
 

@@ -1,11 +1,5 @@
-﻿using ApiDocAndMock.Infrastructure.Middleware;
-using ApiDocAndMock.Infrastructure.Utilities;
+﻿using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {

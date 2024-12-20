@@ -1,7 +1,4 @@
-﻿using TestApi.Domain.Entities;
-using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace TestApi.Application.Queries.Contacts
 {

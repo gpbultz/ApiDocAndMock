@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Middleware
 {
@@ -30,9 +25,9 @@ namespace ApiDocAndMock.Infrastructure.Middleware
                 {
                     var claims = new[]
                     {
-                    new Claim(ClaimTypes.Name, "Mock User"),
-                    new Claim(ClaimTypes.Role, "User"),
-                };
+                        new Claim(ClaimTypes.Name, "Mock User"),
+                        new Claim(ClaimTypes.Role, "User"),
+                    };
 
                     var identity = new ClaimsIdentity(claims, "Mock");
                     context.User = new ClaimsPrincipal(identity);

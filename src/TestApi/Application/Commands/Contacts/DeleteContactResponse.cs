@@ -3,6 +3,6 @@
     public class DeleteContactResponse
     {
         public string Status { get; set; } = "deleted";
-        public Guid DeletedId {  get; set; }
+        public Guid DeletedId { get; set; }
     }
 }

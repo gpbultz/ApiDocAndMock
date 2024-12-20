@@ -1,6 +1,4 @@
-﻿using ApiDocAndMock.Infrastructure.Configurations;
-using Bogus;
-using ApiDocAndMock.Application.Interfaces;
+﻿using Bogus;
 using System.Collections;
 using System.Reflection;
 

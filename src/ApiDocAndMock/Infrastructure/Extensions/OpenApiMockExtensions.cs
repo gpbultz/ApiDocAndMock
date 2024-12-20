@@ -1,16 +1,8 @@
-﻿using ApiDocAndMock.Application.Interfaces;
-using ApiDocAndMock.Infrastructure.Mocking;
+﻿using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -55,7 +47,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         public static RouteHandlerBuilder WithMockResponse<T>(this RouteHandlerBuilder builder) where T : class, new()
         {
             return builder.WithOpenApi(operation =>
-            {                
+            {
                 // Generate mock data
                 var mockExample = ApiMockDataFactory.CreateMockObjects<T>(count: 1).First();
 

@@ -1,7 +1,6 @@
 
 using ApiDocAndMock.Infrastructure.Extensions;
 using ApiDocAndMock.Infrastructure.Mocking;
-using Bogus;
 using Microsoft.AspNetCore.Mvc;
 using NSwagDemo.Infrastructure.API.Extensions;
 using TestApi.Application.Queries.Contacts;

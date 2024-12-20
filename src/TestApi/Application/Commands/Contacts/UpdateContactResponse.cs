@@ -2,6 +2,6 @@
 {
     public class UpdateContactResponse
     {
-        public string Result { get; set;  } = "updated";
+        public string Result { get; set; } = "updated";
     }
 }
