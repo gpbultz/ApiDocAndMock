@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{21AFA798-77F2-4BC3-80EF-2E10763DBCDB}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{8EFB6B50-33A4-4845-893C-2E51A1560254}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiDocAndMock", "src\ApiDocAndMock\ApiDocAndMock.csproj", "{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2FF4A227-3ACE-454F-900E-F8BEA11B1C7D} = {21AFA798-77F2-4BC3-80EF-2E10763DBCDB}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {553AF66D-1E5D-40BA-BF6D-F2C0963CEDDD}
+	EndGlobalSection
+EndGlobal
