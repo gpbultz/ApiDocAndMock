@@ -1,4 +1,5 @@
-﻿using Bogus;
+﻿using ApiDocAndMock.Infrastructure.Configurations;
+using Bogus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,22 +10,20 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 {
     public static class MockConfigurationsFactory
     {
-        private static readonly Dictionary<Type, Dictionary<string, Func<Faker, object>>> Configurations = new();
+        private static readonly Dictionary<Type, Dictionary<string, Func<Faker, object>>> _configurations = new();
 
-        public static void RegisterConfiguration<T>(Dictionary<string, Func<Faker, object>> configuration) where T : class
+        public static void RegisterConfiguration<T>(Action<MockConfigurationBuilder<T>> configure) where T : class
         {
-            Configurations[typeof(T)] = configuration;
+            var builder = new MockConfigurationBuilder<T>();
+            configure(builder);
+            _configurations[typeof(T)] = builder.Build();
         }
 
-        public static Dictionary<string, Func<Faker, object>> GetAllConfigurations<T>() where T : class
+        public static Dictionary<string, Func<Faker, object>> TryGetConfigurations<T>() where T : class
         {
-            if (Configurations.TryGetValue(typeof(T), out var config))
-            {
-                return config;
-            }
-
-            throw new InvalidOperationException($"No mock configuration found for type {typeof(T).Name}");
+            return _configurations.TryGetValue(typeof(T), out var config) ? config : null;
         }
     }
+
 
 }

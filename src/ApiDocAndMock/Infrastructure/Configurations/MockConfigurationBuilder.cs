@@ -10,28 +10,18 @@ namespace ApiDocAndMock.Infrastructure.Configurations
 {
     public class MockConfigurationBuilder<T> where T : class
     {
-        internal Dictionary<string, Func<Faker, object>> FlatConfigurations { get; } = new();
-        internal Dictionary<string, (Func<Faker, object> Generator, Type NestedType)> NestedConfigurations { get; } = new();
+        private readonly Dictionary<string, Func<Faker, object>> _propertyConfigurations = new();
 
         public MockConfigurationBuilder<T> ForProperty(string propertyName, Func<Faker, object> generator)
         {
-            FlatConfigurations[propertyName] = generator;
+            _propertyConfigurations[propertyName] = generator;
             return this;
         }
 
-        public MockConfigurationBuilder<T> ForNestedProperty<TNested>(string propertyName, int nestedCount = 5) where TNested : class, new()
+        public Dictionary<string, Func<Faker, object>> Build()
         {
-            NestedConfigurations[propertyName] = (faker =>
-            {
-                return Enumerable.Range(0, nestedCount)
-                                 .Select(_ => ApiMockDataFactory.CreateMockObject<TNested>(nestedCount - 1))
-                                 .ToList();
-            }, typeof(List<TNested>));
-
-            return this;
+            return _propertyConfigurations;
         }
-
-
-
     }
 }
+

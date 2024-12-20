@@ -8,13 +8,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 {
     public static class ApiMockDataFactory
     {
-        private static MockingConfigurations _configurations;
-
-        public static void Configure(MockingConfigurations configurations)
-        {
-            _configurations = configurations;
-        }
-
         /// <summary>
         /// Creates a mocked object. If no mapping is present in the configuration, random values will be applied.
         /// </summary>
@@ -47,23 +40,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return mockObjects;
         }
 
-        public static object CreateMockObject(Type type, int nestedCount = 5)
-        {
-            if (type == null) throw new ArgumentNullException(nameof(type), "Type cannot be null.");
-            if (!type.IsClass || type == typeof(string))
-                throw new ArgumentException($"The type '{type.FullName}' must be a class and cannot be a string.");
-
-            var faker = new Faker();
-            var instance = Activator.CreateInstance(type);
-
-            if (instance != null)
-            {
-                ApplyMockRules(instance, faker, nestedCount);
-            }
-
-            return instance ?? throw new InvalidOperationException($"Failed to create an instance of type {type.FullName}.");
-        }
-
         private static void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
         {
             if (instance == null)
@@ -73,11 +49,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
             var type = typeof(T);
 
-            // Retrieve property-specific configurations
-            _configurations.TryGetConfigurationFor<T>(out var propertyConfigs);
-
-            var flatConfigs = propertyConfigs?.FlatConfigurations ?? new Dictionary<string, Func<Faker, object>>();
-            var nestedConfigs = propertyConfigs?.NestedConfigurations ?? new Dictionary<string, (Func<Faker, object>, Type)>();
+            // Retrieve the mock rules for the current type
+            var mockRules = MockConfigurationsFactory.TryGetConfigurations<T>();
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -90,29 +63,10 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 {
                     object value;
 
-                    if (flatConfigs.TryGetValue(property.Name, out var generator))
+                    if (mockRules != null && mockRules.TryGetValue(property.Name, out var generator))
                     {
-                        // Use flat property configuration
+                        // Use the configured generator
                         value = generator(faker);
-                    }
-                    else if (nestedConfigs.TryGetValue(property.Name, out var nestedConfig))
-                    {
-                        var (nestedGenerator, nestedType) = nestedConfig;
-
-                        if (typeof(IEnumerable).IsAssignableFrom(property.PropertyType) && property.PropertyType.IsGenericType)
-                        {
-                            // Handle nested list
-                            value = nestedGenerator(faker);
-                        }
-                        else if (nestedType.IsClass && nestedType != typeof(string))
-                        {
-                            // Handle nested object
-                            value = ApiMockDataFactory.CreateMockObject(nestedType, nestedCount - 1);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException($"Unsupported nested type: {nestedType.Name}");
-                        }
                     }
                     else
                     {
@@ -128,9 +82,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 }
             }
         }
-
-
-
 
         private static object GenerateNestedList(PropertyInfo property, int count)
         {
