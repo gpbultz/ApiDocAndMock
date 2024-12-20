@@ -132,7 +132,7 @@ builder.Services.AddMockingConfigurations(() =>
 });
 
 var app = builder.Build();
-app.UseApiMockAndDock();
+app.UseApiDocAndMock(useAuthentication: true, useMockOutcome: true);
 
 //app.UseHttpsRedirection();
 app.MapContactEndpoints();

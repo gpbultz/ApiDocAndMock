@@ -83,32 +83,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             }
         }
 
-        private static object GenerateNestedList(PropertyInfo property, int count)
-        {
-            var elementType = property.PropertyType.GetGenericArguments().FirstOrDefault();
-            if (elementType == null) return null;
-
-            // Recursive call to CreateMockObjects for nested lists
-            var method = typeof(ApiMockDataFactory)
-                .GetMethod(nameof(CreateMockObjects), BindingFlags.Public | BindingFlags.Instance)
-                ?.MakeGenericMethod(elementType);
-
-            return method?.Invoke(null, new object[] { count, count });
-        }
-
-        private static object GenerateNestedObject(PropertyInfo property, int nestedCount)
-        {
-            var nestedType = property.PropertyType;
-            if (nestedType == null) return null;
-
-            var method = typeof(ApiMockDataFactory)
-                .GetMethod(nameof(CreateMockObject), BindingFlags.Public | BindingFlags.Instance)
-                ?.MakeGenericMethod(nestedType);
-
-            return method?.Invoke(null, new object[] { nestedCount });
-        }
-
-
         private static object GenerateDefaultValueDynamically(Type type, Faker faker, int nestedCount = 3)
         {
             // Prevent deep recursion for nested objects
