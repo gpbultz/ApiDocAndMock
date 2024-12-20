@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Mvc;
 using TestApi.Domain.Entities;
 
@@ -10,9 +11,9 @@ namespace NSwagDemo.Infrastructure.API.Extensions
     {
         public static void MapBookingEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/bookings", ([FromServices] IApiMockDataFactory mockDataFactory) =>
+            app.MapGet("/bookings", () =>
             {
-                var bookings = mockDataFactory.CreateMockObjects<Booking>(count: 20);
+                var bookings = ApiMockDataFactory.CreateMockObjects<Booking>(count: 20);
                 return Results.Ok(bookings);
             })
             .WithMockResponseList<Booking>(count: 20)

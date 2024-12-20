@@ -2,6 +2,7 @@
 
 using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
@@ -12,9 +13,9 @@ namespace NSwagDemo.Infrastructure.API.Extensions
     {
         public static void MapHotelEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapGet("/hotels", ([FromServices] IApiMockDataFactory mockDataFactory, [AsParameters] GetHotelsQuery query) =>
+            app.MapGet("/hotels", ([AsParameters] GetHotelsQuery query) =>
             {
-                var hotels = mockDataFactory.CreateMockObject<GetHotelsResponse>();
+                var hotels = ApiMockDataFactory.CreateMockObject<GetHotelsResponse>();
                 hotels.PageNumber = query.Page ?? 1;
                 hotels.PageSize = query.PageSize ?? 10;
                 hotels.TotalCount = 50;
@@ -26,9 +27,9 @@ namespace NSwagDemo.Infrastructure.API.Extensions
             .WithSummary("Retrieve hotels", "Returns a paginated list of hotels.")
             .WithCommonResponses("401", "429", "500");
 
-            app.MapGet("/hotels/{id}", ([FromServices] IApiMockDataFactory mockDataFactory, Guid id) =>
+            app.MapGet("/hotels/{id}", (Guid id) =>
             {
-                var hotel = mockDataFactory.CreateMockObjects<Hotel>(count: 1);
+                var hotel = ApiMockDataFactory.CreateMockObjects<Hotel>(count: 1);
                 hotel.FirstOrDefault().Id = id; // Assign ID from path
                 return Results.Ok(hotel);
             })

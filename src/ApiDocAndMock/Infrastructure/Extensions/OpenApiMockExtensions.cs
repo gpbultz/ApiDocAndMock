@@ -1,4 +1,5 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,11 +26,10 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var mockExample = builder.ServiceProvider()
-                    .GetRequiredService<IApiMockDataFactory>()
-                    .CreateMockObjects<T>(1)
-                    .First();
+                // Generate the mock example using the static factory
+                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(1).First();
 
+                // Set the request body in the OpenAPI operation
                 operation.RequestBody = new OpenApiRequestBody
                 {
                     Content = new Dictionary<string, OpenApiMediaType>
@@ -40,9 +40,11 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                         }
                     }
                 };
+
                 return operation;
             });
         }
+
 
         /// <summary>
         /// Documents a Mock Response for an endpoint
@@ -53,12 +55,11 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         public static RouteHandlerBuilder WithMockResponse<T>(this RouteHandlerBuilder builder) where T : class, new()
         {
             return builder.WithOpenApi(operation =>
-            {
-                var mockExample = builder.ServiceProvider()
-                    .GetRequiredService<IApiMockDataFactory>()
-                    .CreateMockObjects<T>(1)
-                    .First();
+            {                
+                // Generate mock data
+                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(count: 1).First();
 
+                // Define the response for Swagger
                 operation.Responses["200"] = new OpenApiResponse
                 {
                     Description = "Successful response",
@@ -81,8 +82,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 return operation;
             })
-            .Produces<T>(200);
+            .Produces<T>(200); // Register schema globally
         }
+
 
         /// <summary>
         /// Documents a list of Mocked objects for a Response for an endpoint
@@ -95,34 +97,39 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var mockExamples = builder.ServiceProvider()
-                    .GetRequiredService<IApiMockDataFactory>()
-                    .CreateMockObjects<T>(count);
+                // Generate the mock examples using the static factory
+                var mockExamples = ApiMockDataFactory.CreateMockObjects<T>(count);
 
+                // Set the response in the OpenAPI operation
                 operation.Responses["200"] = new OpenApiResponse
                 {
+                    Description = "Successful response with a list of mocked objects",
                     Content = new Dictionary<string, OpenApiMediaType>
                     {
                         ["application/json"] = new OpenApiMediaType
                         {
-                            Example = new Microsoft.OpenApi.Any.OpenApiString(JsonSerializer.Serialize(mockExamples))
+                            Example = new Microsoft.OpenApi.Any.OpenApiString(JsonSerializer.Serialize(mockExamples)),
+                            Schema = new OpenApiSchema
+                            {
+                                Type = "array",
+                                Items = new OpenApiSchema
+                                {
+                                    Reference = new OpenApiReference
+                                    {
+                                        Type = ReferenceType.Schema,
+                                        Id = typeof(T).Name
+                                    }
+                                }
+                            }
                         }
                     }
                 };
+
                 return operation;
             });
         }
 
-        /// <summary>
-        /// Helper method to get the service provider from the RouteHandlerBuilder
-        /// </summary>
-        private static IServiceProvider ServiceProvider(this RouteHandlerBuilder builder)
-        {
-            return builder
-                .GetType()
-                .GetProperty("ApplicationServices", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?.GetValue(builder) as IServiceProvider
-                ?? throw new InvalidOperationException("Unable to retrieve the service provider.");
-        }
     }
+
+
 }

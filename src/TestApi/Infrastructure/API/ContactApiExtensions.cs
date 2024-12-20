@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
+using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Commands.Contacts;
@@ -12,9 +13,9 @@ namespace NSwagDemo.Infrastructure.API.Extensions
         public static void MapContactEndpoints(this IEndpointRouteBuilder app)
         {
             // Get All Contacts
-            app.MapGet("/contacts", ([FromServices] IMemoryDb db, [FromServices] IApiMockDataFactory mockDataFactory, [AsParameters] GetContactsQuery query) =>
+            app.MapGet("/contacts", ([FromServices] IMemoryDb db, [AsParameters] GetContactsQuery query) =>
             {
-                var response = mockDataFactory.CreateMockObject<GetContactsResponse>(query.PageSize ?? 10);
+                var response = ApiMockDataFactory.CreateMockObject<GetContactsResponse>(query.PageSize ?? 10);
                 response.PageNumber = query.Page ?? 1;
                 response.PageSize = query.PageSize ?? 10;
                 response.TotalCount = 50;
@@ -25,7 +26,7 @@ namespace NSwagDemo.Infrastructure.API.Extensions
             .WithMockResponse<GetContactsResponse>()       // Document response
             .WithSummary("Retrieve all contacts", "Returns a paginated list of contacts with optional filtering by city.")
             .RequireBearerToken()
-            .WithCommonResponses("401", "429", "500")
+            .WithCommonResponses("401", "403", "429", "500")
             .WithRequiredQueryParameter("City", "City is required for filtering contacts.")
             .WithMockOutcome();
 
@@ -43,7 +44,7 @@ namespace NSwagDemo.Infrastructure.API.Extensions
             // Update Contact by Id
             app.MapPut("/contacts/{id:guid}", ([FromBody] UpdateContactCommand command) =>
             {
-                return Results.Ok(new UpdateContactResponse { Result = "updated"});
+                return Results.Ok(new UpdateContactResponse { Result = "updated" });
             })
             .WithMockRequest<UpdateContactCommand>()
             .WithStaticResponse("201", new UpdateContactResponse { Result = "updated" })

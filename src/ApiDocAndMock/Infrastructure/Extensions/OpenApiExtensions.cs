@@ -1,5 +1,7 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
+using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
@@ -233,17 +235,15 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <returns></returns>
         public static RouteHandlerBuilder WithCommonResponses(this RouteHandlerBuilder builder, params string[] statusCodes)
         {
+            var responseConfigurations = ServiceResolver.GetService<CommonResponseConfigurations>();
+
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = builder.GetServiceProvider();
-                var responseConfigurations = serviceProvider.GetRequiredService<CommonResponseConfigurations>();
-
                 foreach (var statusCode in statusCodes)
                 {
                     if (int.TryParse(statusCode, out var parsedStatusCode))
                     {
                         var problemDetails = responseConfigurations.GetProblemDetailsForStatusCode(parsedStatusCode);
-
                         if (problemDetails != null)
                         {
                             operation.Responses[statusCode] = new OpenApiResponse
@@ -265,14 +265,6 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             });
         }
 
-        private static IServiceProvider GetServiceProvider(this RouteHandlerBuilder builder)
-        {
-            return builder
-                .GetType()
-                .GetProperty("ApplicationServices", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?.GetValue(builder) as IServiceProvider
-                ?? throw new InvalidOperationException("Unable to retrieve the service provider.");
-        }
 
 
         // Generate example for 400 Bad Request

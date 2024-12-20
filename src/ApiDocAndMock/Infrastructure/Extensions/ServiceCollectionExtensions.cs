@@ -7,21 +7,20 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<MockingConfigurations> configureOptions)
+        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<MockingConfigurations>? configureOptions = null)
         {
-            if (configureOptions == null)
-            {
-                throw new ArgumentNullException(nameof(configureOptions), "Configuration options must be provided.");
-            }
-
             var configurations = new MockingConfigurations();
-            configureOptions(configurations);
+            configureOptions?.Invoke(configurations);
 
+            // Pass configurations to the MockObjectFactory
+            ApiMockDataFactory.Configure(configurations);
+
+            // Optional: Register configurations in DI for future use
             services.AddSingleton(configurations);
-            services.AddSingleton<IApiMockDataFactory>(new ApiMockDataFactory(configurations));
 
             return services;
         }
+
 
         public static IServiceCollection AddCommonResponseConfigurations(this IServiceCollection services, Action<CommonResponseConfigurations>? configureOptions = null)
         {

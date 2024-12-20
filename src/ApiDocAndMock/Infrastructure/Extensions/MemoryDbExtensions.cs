@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Data;
+using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -40,15 +41,14 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                var apiMockDataFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-
+                
                 var request = context.GetArgument<TRequest>(0);
 
                 var newId = generateId?.Invoke() ?? Guid.NewGuid();
 
                 TStored storedObject = customMapper != null
                     ? customMapper(request)
-                    : MapRequestToStored(request, apiMockDataFactory.CreateMockObject<TStored>());
+                    : MapRequestToStored(request, ApiMockDataFactory.CreateMockObject<TStored>());
 
                 var idProperty = typeof(TStored).GetProperty(idFieldName);
                 if (idProperty != null && idProperty.CanWrite)
@@ -99,8 +99,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                var apiMockDataFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-
+                
                 var request = context.GetArgument<TRequest>(0);
 
                 var sourceIdProperty = request.GetType().GetProperty(sourceIdFieldName);
@@ -141,7 +140,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 // Prepare the response
                 var response = responseMapper != null
                     ? responseMapper(existingObject)
-                    : apiMockDataFactory.CreateMockObject<TResponse>();
+                    : ApiMockDataFactory.CreateMockObject<TResponse>();
 
                 // Handle method outcomes
                 return methodOutcome switch
@@ -191,8 +190,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.AddEndpointFilter(async (context, next) =>
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                var apiMockDataFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-
+                
                 var idString = context.GetArgument<string>(0);
 
                 var idProperty = typeof(TStored).GetProperty(idFieldName);
@@ -226,7 +224,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 if (existingObject == null && behaviour == DefaultMethodBehaviour.Return200)
                 {
-                    var mockResponse = apiMockDataFactory.CreateMockObject<TResponse>();
+                    var mockResponse = ApiMockDataFactory.CreateMockObject<TResponse>();
                     return Results.Ok(mockResponse);
                 }
 
@@ -234,7 +232,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 var response = responseMapper != null
                     ? responseMapper(existingObject!)
-                    : apiMockDataFactory.CreateMockObject<TResponse>();
+                    : ApiMockDataFactory.CreateMockObject<TResponse>();
 
                 return behaviour switch
                 {
@@ -301,8 +299,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 .AddEndpointFilter(async (context, next) =>
                 {
                     var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                    var apiMockDataFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-
+                    
                     var query = context.HttpContext.Request.Query;
                     var id = context.GetArgument<Guid>(0);
 
@@ -322,7 +319,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     {
                         if (behaviour == NotFoundBehaviour.ReturnMockIfNotFound)
                         {
-                            var mockedItem = apiMockDataFactory.CreateMockObject<T>();
+                            var mockedItem = ApiMockDataFactory.CreateMockObject<T>();
                             var idProperty = typeof(T).GetProperty(idFieldName);
                             if (idProperty != null && idProperty.CanWrite)
                             {

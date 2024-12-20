@@ -6,11 +6,11 @@ using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
-    public class ApiMockDataFactory : IApiMockDataFactory
+    public static class ApiMockDataFactory
     {
-        private readonly MockingConfigurations _configurations;
+        private static MockingConfigurations _configurations;
 
-        public ApiMockDataFactory(MockingConfigurations configurations)
+        public static void Configure(MockingConfigurations configurations)
         {
             _configurations = configurations;
         }
@@ -21,7 +21,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <typeparam name="T">Type of object to create.</typeparam>
         /// <param name="nestedCount">Indicates the level of nesting for the object.</param>
         /// <returns>Mocked object.</returns>
-        public T CreateMockObject<T>(int nestedCount = 5) where T : class, new()
+        public static T CreateMockObject<T>(int nestedCount = 5) where T : class, new()
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
@@ -37,7 +37,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <param name="count">Number of objects to create.</param>
         /// <param name="nestedCount">Indicates the level of nesting for each object.</param>
         /// <returns>List of mocked objects.</returns>
-        public List<T> CreateMockObjects<T>(int count = 1, int nestedCount = 5) where T : class, new()
+        public static List<T> CreateMockObjects<T>(int count = 1, int nestedCount = 5) where T : class, new()
         {
             var mockObjects = new List<T>();
             for (int i = 0; i < count; i++)
@@ -47,7 +47,24 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return mockObjects;
         }
 
-        private void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
+        public static object CreateMockObject(Type type, int nestedCount = 5)
+        {
+            if (type == null) throw new ArgumentNullException(nameof(type), "Type cannot be null.");
+            if (!type.IsClass || type == typeof(string))
+                throw new ArgumentException($"The type '{type.FullName}' must be a class and cannot be a string.");
+
+            var faker = new Faker();
+            var instance = Activator.CreateInstance(type);
+
+            if (instance != null)
+            {
+                ApplyMockRules(instance, faker, nestedCount);
+            }
+
+            return instance ?? throw new InvalidOperationException($"Failed to create an instance of type {type.FullName}.");
+        }
+
+        private static void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
         {
             if (instance == null)
             {
@@ -57,14 +74,10 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             var type = typeof(T);
 
             // Retrieve property-specific configurations
-            Dictionary<string, Func<Faker, object>> flatConfigs = null;
-            Dictionary<string, (Func<Faker, object> Generator, Type NestedType)> nestedConfigs = null;
+            _configurations.TryGetConfigurationFor<T>(out var propertyConfigs);
 
-            if (_configurations.TryGetConfigurationFor<T>(out var propertyConfigs))
-            {
-                flatConfigs = propertyConfigs.FlatConfigurations;
-                nestedConfigs = propertyConfigs.NestedConfigurations;
-            }
+            var flatConfigs = propertyConfigs?.FlatConfigurations ?? new Dictionary<string, Func<Faker, object>>();
+            var nestedConfigs = propertyConfigs?.NestedConfigurations ?? new Dictionary<string, (Func<Faker, object>, Type)>();
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -77,27 +90,28 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 {
                     object value;
 
-                    if (flatConfigs != null && flatConfigs.TryGetValue(property.Name, out var generator))
+                    if (flatConfigs.TryGetValue(property.Name, out var generator))
                     {
                         // Use flat property configuration
                         value = generator(faker);
                     }
-                    else if (nestedConfigs != null && nestedConfigs.TryGetValue(property.Name, out var nestedConfig))
+                    else if (nestedConfigs.TryGetValue(property.Name, out var nestedConfig))
                     {
-                        // Handle nested lists or objects
                         var (nestedGenerator, nestedType) = nestedConfig;
 
                         if (typeof(IEnumerable).IsAssignableFrom(property.PropertyType) && property.PropertyType.IsGenericType)
                         {
-                            // Nested list
-                            value = Enumerable.Range(0, faker.Random.Int(1, 5))
-                                              .Select(_ => nestedGenerator(faker))
-                                              .ToList();
+                            // Handle nested list
+                            value = nestedGenerator(faker);
+                        }
+                        else if (nestedType.IsClass && nestedType != typeof(string))
+                        {
+                            // Handle nested object
+                            value = ApiMockDataFactory.CreateMockObject(nestedType, nestedCount - 1);
                         }
                         else
                         {
-                            // Nested object
-                            value = nestedGenerator(faker);
+                            throw new InvalidOperationException($"Unsupported nested type: {nestedType.Name}");
                         }
                     }
                     else
@@ -117,7 +131,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
 
 
-        private object GenerateNestedList(PropertyInfo property, int count)
+
+        private static object GenerateNestedList(PropertyInfo property, int count)
         {
             var elementType = property.PropertyType.GetGenericArguments().FirstOrDefault();
             if (elementType == null) return null;
@@ -127,10 +142,10 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 .GetMethod(nameof(CreateMockObjects), BindingFlags.Public | BindingFlags.Instance)
                 ?.MakeGenericMethod(elementType);
 
-            return method?.Invoke(this, new object[] { count, count });
+            return method?.Invoke(null, new object[] { count, count });
         }
 
-        private object GenerateNestedObject(PropertyInfo property, int nestedCount)
+        private static object GenerateNestedObject(PropertyInfo property, int nestedCount)
         {
             var nestedType = property.PropertyType;
             if (nestedType == null) return null;
@@ -139,11 +154,11 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 .GetMethod(nameof(CreateMockObject), BindingFlags.Public | BindingFlags.Instance)
                 ?.MakeGenericMethod(nestedType);
 
-            return method?.Invoke(this, new object[] { nestedCount });
+            return method?.Invoke(null, new object[] { nestedCount });
         }
 
 
-        private object GenerateDefaultValueDynamically(Type type, Faker faker, int nestedCount = 3)
+        private static object GenerateDefaultValueDynamically(Type type, Faker faker, int nestedCount = 3)
         {
             // Prevent deep recursion for nested objects
             if (nestedCount <= 0)

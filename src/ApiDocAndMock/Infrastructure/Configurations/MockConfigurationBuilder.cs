@@ -1,4 +1,5 @@
-﻿using Bogus;
+﻿using ApiDocAndMock.Infrastructure.Mocking;
+using Bogus;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,10 +19,19 @@ namespace ApiDocAndMock.Infrastructure.Configurations
             return this;
         }
 
-        public MockConfigurationBuilder<T> ForNestedProperty<TNested>(string propertyName, Func<Faker, TNested> generator) where TNested : class
+        public MockConfigurationBuilder<T> ForNestedProperty<TNested>(string propertyName, int nestedCount = 5) where TNested : class, new()
         {
-            NestedConfigurations[propertyName] = (faker => generator(faker), typeof(TNested));
+            NestedConfigurations[propertyName] = (faker =>
+            {
+                return Enumerable.Range(0, nestedCount)
+                                 .Select(_ => ApiMockDataFactory.CreateMockObject<TNested>(nestedCount - 1))
+                                 .ToList();
+            }, typeof(List<TNested>));
+
             return this;
         }
+
+
+
     }
 }

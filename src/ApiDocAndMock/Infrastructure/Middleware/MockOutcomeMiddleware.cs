@@ -1,5 +1,7 @@
-﻿using ApiDocAndMock.Infrastructure.Documentation;
+﻿using ApiDocAndMock.Infrastructure.Configurations;
+using ApiDocAndMock.Infrastructure.Documentation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 
 namespace ApiDocAndMock.Infrastructure.Middleware
@@ -11,10 +13,12 @@ namespace ApiDocAndMock.Infrastructure.Middleware
     public class MockOutcomeMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly IServiceProvider _serviceProvider;
 
-        public MockOutcomeMiddleware(RequestDelegate next)
+        public MockOutcomeMiddleware(RequestDelegate next, IServiceProvider serviceProvider)
         {
             _next = next;
+            _serviceProvider = serviceProvider;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -22,8 +26,11 @@ namespace ApiDocAndMock.Infrastructure.Middleware
             if (context.Request.Query.TryGetValue("mockOutcome", out var outcomeValue) &&
                 int.TryParse(outcomeValue, out var statusCode))
             {
+                // Retrieve CommonResponseConfigurations from the DI container
+                var responseConfigurations = _serviceProvider.GetRequiredService<CommonResponseConfigurations>();
+
                 // Map the status code to a predefined response
-                var problemDetails = CommonResponseExamples.GetProblemDetailsForStatusCode(statusCode);
+                var problemDetails = responseConfigurations.GetProblemDetailsForStatusCode(statusCode);
                 if (problemDetails != null)
                 {
                     context.Response.StatusCode = statusCode;
@@ -50,4 +57,5 @@ namespace ApiDocAndMock.Infrastructure.Middleware
             await _next(context);
         }
     }
+
 }
