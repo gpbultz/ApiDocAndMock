@@ -23,17 +23,17 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithSummary("Retrieve hotels", "Returns a paginated list of hotels.")
             .WithCommonResponses("401", "429", "500");
 
-            //app.MapGet("/hotels/{id}", (Guid id) =>
-            //{
-            //    var hotel = ApiMockDataFactory.CreateMockObjects<Hotel>(count: 1);
-            //    hotel.FirstOrDefault().Id = id; // Assign ID from path
-            //    return Results.Ok(hotel);
-            //})
-            //.Produces<Hotel>(200)
-            //.WithMockResponse<Hotel>()
-            //.RequireBearerToken()
-            //.WithSummary("Retrieve a specific hotel", "Returns the details of a hotel by its ID.")
-            //.WithCommonResponses("401", "429", "500");
+            app.MapGet("/hotels/{id}", (Guid id) =>
+            {
+                var hotel = ApiMockDataFactory.CreateMockObjects<Hotel>(count: 1);
+                hotel.FirstOrDefault().Id = id; // Assign ID from path
+                return Results.Ok(hotel);
+            })
+            .Produces<Hotel>(200)
+            .WithMockResponse<Hotel>()
+            .RequireBearerToken()
+            .WithSummary("Retrieve a specific hotel", "Returns the details of a hotel by its ID.")
+            .WithCommonResponses("401", "429", "500");
         }
     }
 
