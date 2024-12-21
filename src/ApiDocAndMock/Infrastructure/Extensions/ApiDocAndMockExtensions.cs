@@ -1,4 +1,5 @@
-﻿using ApiDocAndMock.Infrastructure.Utilities;
+﻿using ApiDocAndMock.Infrastructure.Mocking;
+using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -14,6 +15,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             // Set up the global service provider resolver
             ServiceResolver.SetServiceProvider(app.ApplicationServices);
+            ApiMockDataFactory.Initialize(app.ApplicationServices);
 
             if (useAuthentication)
             {

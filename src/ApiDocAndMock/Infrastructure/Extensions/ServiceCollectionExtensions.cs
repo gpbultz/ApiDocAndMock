@@ -1,13 +1,23 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action configure)
+        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<MockConfigurationsFactoryWrapper> configure)
         {
-            configure?.Invoke();
+            if (configure == null)
+            {
+                throw new ArgumentNullException(nameof(configure));
+            }
+
+            var wrapper = new MockConfigurationsFactoryWrapper();
+            configure(wrapper);
+
+            services.AddSingleton(wrapper);
+
             return services;
         }
 

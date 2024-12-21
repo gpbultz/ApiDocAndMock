@@ -2,7 +2,7 @@
 using ApiDocAndMock.Infrastructure.Extensions;
 using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Mvc;
-using NSwagDemo.Infrastructure.API.Extensions;
+using TestApi.Infrastructure.API.Extensions;
 using TestApi.Application.Queries.Contacts;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
@@ -31,11 +31,11 @@ builder.Services.AddCommonResponseConfigurations(config =>
     });
 });
 
-builder.Services.AddMockingConfigurations(() =>
+builder.Services.AddMockingConfigurations(config =>
 {
-    MockConfigurationsFactory.RegisterConfiguration<Contact>(contactConfig =>
+    config.RegisterConfiguration<Contact>(cfg =>
     {
-        contactConfig
+        cfg
             .ForProperty("Id", faker => Guid.NewGuid())
             .ForProperty("Name", faker => faker.Name.FullName())
             .ForProperty("Email", faker => faker.Internet.Email())
@@ -47,21 +47,21 @@ builder.Services.AddMockingConfigurations(() =>
     });
 
     // Booking configuration
-    MockConfigurationsFactory.RegisterConfiguration<Booking>(bookingConfig =>
+    config.RegisterConfiguration<Booking>(cfg =>
     {
-        bookingConfig
+        cfg
             .ForProperty("Id", faker => Guid.NewGuid())
             .ForProperty("DateFrom", faker => faker.Date.Soon())
             .ForProperty("DateTo", faker => faker.Date.Soon(10))
             .ForProperty("NumberOfGuests", faker => faker.Random.Int(1, 5))
-            .ForProperty("Room", faker => ApiMockDataFactory.CreateMockObject<Room>())
-            .ForProperty("PrimaryContact", faker => ApiMockDataFactory.CreateMockObject<Contact>());
+            .ForPropertyObject<Room>("Room")
+            .ForPropertyObject<Contact>("PrimaryContact");
     });
 
     // Hotel configuration
-    MockConfigurationsFactory.RegisterConfiguration<Hotel>(hotelConfig =>
+    config.RegisterConfiguration<Hotel>(cfg =>
     {
-        hotelConfig
+        cfg
             .ForProperty("Id", faker => Guid.NewGuid())
             .ForProperty("Name", faker => faker.Company.CompanyName())
             .ForProperty("Address", faker => faker.Address.FullAddress())
@@ -70,22 +70,25 @@ builder.Services.AddMockingConfigurations(() =>
             .ForProperty("PostalCode", faker => faker.Address.ZipCode())
             .ForProperty("Country", faker => faker.Address.Country())
             .ForProperty("Phone", faker => faker.Phone.PhoneNumber())
-            .ForProperty("Rooms", faker => ApiMockDataFactory.CreateMockObjects<Room>(5))
-            .ForProperty("Bookings", faker => ApiMockDataFactory.CreateMockObjects<Booking>(5));
+            .ForPropertyObjectList<Room>("Rooms", 5)
+            .ForPropertyObjectList<Booking>("Bookings", 5);
     });
-    MockConfigurationsFactory.RegisterConfiguration<Room>(roomConfig =>
+
+    config.RegisterConfiguration<Room>(cfg =>
     {
-        roomConfig.ForProperty("Floor", faker => faker.Random.Int(1, 10))
+        cfg.ForProperty("Floor", faker => faker.Random.Int(1, 10))
                   .ForProperty("RoomNumber", faker => faker.Random.Int(100, 999))
                   .ForProperty("NumberOfBeds", faker => faker.Random.Int(1, 3));
     });
-    MockConfigurationsFactory.RegisterConfiguration<GetContactsQuery>(cfg =>
+
+    config.RegisterConfiguration<GetContactsQuery>(cfg =>
     {
         cfg.ForProperty("Page", faker => faker.Random.Int(1, 100))
            .ForProperty("PageSize", faker => faker.Random.Int(10, 50))
            .ForProperty("City", faker => faker.Address.City());
     });
-    MockConfigurationsFactory.RegisterConfiguration<GetContactByIdResponse>(cfg =>
+
+    config.RegisterConfiguration<GetContactByIdResponse>(cfg =>
     {
         cfg.ForProperty("Name", faker => faker.Name.FullName())
             .ForProperty("Email", faker => faker.Internet.Email())
@@ -95,25 +98,27 @@ builder.Services.AddMockingConfigurations(() =>
             .ForProperty("Region", faker => faker.Address.StateAbbr())
             .ForProperty("PostalCode", faker => faker.Address.ZipCode());
     });
-    MockConfigurationsFactory.RegisterConfiguration<GetContactsResponse>(responseConfig =>
+
+    config.RegisterConfiguration<GetContactsResponse>(cfg =>
     {
-        responseConfig
+        cfg
             .ForProperty("TotalCount", faker => faker.Random.Int(50, 100))
             .ForProperty("PageNumber", faker => faker.Random.Int(1, 10))
             .ForProperty("PageSize", faker => faker.Random.Int(10, 50))
-            .ForProperty("Contacts", faker => ApiMockDataFactory.CreateMockObjects<GetContactByIdResponse>(5));
+            .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5);
     });
-    MockConfigurationsFactory.RegisterConfiguration<GetHotelsResponse>(responseConfig =>
+
+    config.RegisterConfiguration<GetHotelsResponse>(cfg =>
     {
-        responseConfig
+        cfg
             .ForProperty("TotalCount", faker => faker.Random.Int(1, 10))
             .ForProperty("PageNumber", faker => faker.Random.Int(1, 1))
             .ForProperty("PageNumber", faker => faker.Random.Int(1, 1))
             .ForProperty("PageSize", faker => faker.Random.Int(1, 1))
-            .ForProperty("Hotels", faker => ApiMockDataFactory.CreateMockObjects<GetHotelByIdResponse>(5));
+            .ForPropertyObjectList<GetHotelByIdResponse>("Hotels", 5);
     });
 
-    MockConfigurationsFactory.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
+    config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
     {
         cfg
             .ForProperty("Id", faker => faker.Random.Guid())
@@ -125,12 +130,14 @@ builder.Services.AddMockingConfigurations(() =>
             .ForProperty("PostalCode", faker => faker.Address.ZipCode())
             .ForProperty("Country", faker => faker.Address.Country())
             .ForProperty("Phone", faker => faker.Phone.PhoneNumber())
-            .ForProperty("Bookings", faker => ApiMockDataFactory.CreateMockObjects<Booking>(5));
+            .ForPropertyObjectList<Booking>("Bookings", 5);
     });
 
 });
 
 var app = builder.Build();
+
+
 app.UseApiDocAndMock(useAuthentication: true, useMockOutcome: true);
 
 //app.UseHttpsRedirection();

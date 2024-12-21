@@ -1,4 +1,5 @@
-﻿using Bogus;
+﻿using ApiDocAndMock.Infrastructure.Mocking;
+using Bogus;
 
 namespace ApiDocAndMock.Infrastructure.Configurations
 {
@@ -9,6 +10,20 @@ namespace ApiDocAndMock.Infrastructure.Configurations
         public MockConfigurationBuilder<T> ForProperty(string propertyName, Func<Faker, object> generator)
         {
             _propertyConfigurations[propertyName] = generator;
+            return this;
+        }
+
+        // For a single nested object
+        public MockConfigurationBuilder<T> ForPropertyObject<TNested>(string propertyName) where TNested : class, new()
+        {
+            _propertyConfigurations[propertyName] = faker => ApiMockDataFactory.CreateMockObject<TNested>();
+            return this;
+        }
+
+        // For a list of nested objects
+        public MockConfigurationBuilder<T> ForPropertyObjectList<TNested>(string propertyName, int count = 5) where TNested : class, new()
+        {
+            _propertyConfigurations[propertyName] = faker => ApiMockDataFactory.CreateMockObjects<TNested>(count);
             return this;
         }
 

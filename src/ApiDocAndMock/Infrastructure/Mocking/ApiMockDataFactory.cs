@@ -1,4 +1,5 @@
 ﻿using Bogus;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
 using System.Reflection;
 
@@ -6,6 +7,13 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 {
     public static class ApiMockDataFactory
     {
+        private static IServiceProvider _serviceProvider;
+
+        public static void Initialize(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
+
         /// <summary>
         /// Creates a mocked object. If no mapping is present in the configuration, random values will be applied.
         /// </summary>
@@ -45,10 +53,11 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 throw new ArgumentNullException(nameof(instance), "Instance cannot be null.");
             }
 
+            var wrapper = _serviceProvider.GetRequiredService<MockConfigurationsFactoryWrapper>();
             var type = typeof(T);
 
             // Retrieve the mock rules for the current type
-            var mockRules = MockConfigurationsFactory.TryGetConfigurations<T>();
+            var mockRules = wrapper?.TryGetConfigurations<T>();
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {

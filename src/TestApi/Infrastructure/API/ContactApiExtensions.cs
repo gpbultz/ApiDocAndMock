@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Commands.Contacts;
 using TestApi.Application.Queries.Contacts;
 
-namespace NSwagDemo.Infrastructure.API.Extensions
+namespace TestApi.Infrastructure.API.Extensions
 {
     public static class ContactApiExtensions
     {
@@ -89,6 +89,7 @@ namespace NSwagDemo.Infrastructure.API.Extensions
             .Produces<CreateContactResponse>(201)
             .WithMockRequest<CreateContactCommand>()
             .WithMockResponse<CreateContactResponse>()
+            .WithValidationErrors<CreateContactCommand>()
             .WithSummary("Create a new contact", "Creates a new contact with the provided details.")
             .WithCommonResponses("401", "429", "500");
         }

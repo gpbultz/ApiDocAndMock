@@ -3,7 +3,7 @@ using ApiDocAndMock.Infrastructure.Mocking;
 using TestApi.Domain.Entities;
 
 
-namespace NSwagDemo.Infrastructure.API.Extensions
+namespace TestApi.Infrastructure.API.Extensions
 {
     public static class BookingApiExtensions
     {
