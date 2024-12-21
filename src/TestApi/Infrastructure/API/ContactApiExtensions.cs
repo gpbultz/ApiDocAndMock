@@ -33,7 +33,7 @@ namespace TestApi.Infrastructure.API.Extensions
 
             // Get Contact by ID
             app.MapGet("/contacts/{id:guid}", (Guid id) => Results.Ok())
-            .GetMockFromMemoryDb<GetContactByIdResponse>(idFieldName: "Id", defaultBehaviour: NotFoundBehaviour.Return404)
+            .GetMockFromMemoryDb<GetContactByIdResponse>()
             .Produces<GetContactByIdResponse>(200)
             .Produces(404)
             .WithMockResponse<GetContactByIdResponse>()
@@ -63,12 +63,9 @@ namespace TestApi.Infrastructure.API.Extensions
                 return Results.NoContent();
             })
             .WithPathParameter(name: "id", description: "The unique identifier of the contact to delete.")
-            .DeleteMockWithMemoryDb<GetContactByIdResponse, DeleteContactResponse>(
-                responseMapper: deleted => new DeleteContactResponse
-                {
-                    Status = "Deleted successfully.",
-                    DeletedId = deleted.Id
-                });
+            .DeleteMockWithMemoryDb<GetContactByIdResponse, DeleteContactResponse>()
+            .RequireBearerToken();
+            
 
 
             // Create Contact
@@ -77,19 +74,11 @@ namespace TestApi.Infrastructure.API.Extensions
                 return Results.Ok(command);
             })
             .CreateMockWithMemoryDb<CreateContactCommand, GetContactByIdResponse, CreateContactResponse>()
-            //.CreateMockWithMemoryDb<CreateContactCommand, GetContactByIdResponse, CreateContactResponse>(
-            //    customMapper: command => new GetContactByIdResponse
-            //    {
-            //        Id = Guid.NewGuid(),
-            //        Name = $"{command.Name} (Custom)",
-            //        Email = command.Email,
-            //        City = command.City
-            //    },
-            //    locationPathBuilder: response => $"/contacts/{response.Id}")
             .Produces<CreateContactResponse>(201)
             .WithMockRequest<CreateContactCommand>()
             .WithMockResponse<CreateContactResponse>()
             .WithValidationErrors<CreateContactCommand>()
+            .RequireBearerToken()
             .WithSummary("Create a new contact", "Creates a new contact with the provided details.")
             .WithCommonResponses("401", "429", "500");
         }
