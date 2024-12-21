@@ -5,8 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>ApiDocAndMock</PackageId>
-	  <Version>1.0.1</Version>
-	  <Authors>Gavin Park</Authors>
+	  <Version>1.0.2</Version>
+	  <Authors>gpbultz</Authors>
 	  <Company></Company>
 	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
 	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -28,12 +28,6 @@
 	<ItemGroup>
 		<None Include ="api.png" Pack="true" PackagePath="/" />
 		<None Include="README.md" Pack="true" PackagePath="\"/>
-		<None Include="CreateMockWithMemoryDb Usage.md" Pack="true" PackagePath="\"/>
-		<None Include="DeleteMockWithMemoryDb Usage.md" Pack="true" PackagePath="\"/>
-		<None Include="GetMockFromMemoryDb Usage.md" Pack="true" PackagePath="\"/>
-		<None Include="OpenApiExtensions For MinimalApi endpoints.md" Pack="true" PackagePath="\"/>
-		<None Include="OpenApiMockExtensions For MinimalApi Endpoints.md" Pack="true" PackagePath="\"/>
-		<None Include="UpdateMockWIthMemoryDb Usage.md" Pack="true" PackagePath="\"/>
 		<None Include="LICENSE-THIRD-PARTY.md" Pack="true" PackagePath="LICENSE-THIRD-PARTY.md" />
 	</ItemGroup>
 
