@@ -32,50 +32,50 @@ builder.Services.AddCommonResponseConfigurations(config =>
     });
 });
 
-//builder.Services.AddDefaultFakerRules(rules =>
-//{
-//    rules["Phone"] = faker => "+44 " + faker.Phone.PhoneNumber();  // UK-specific format
-//});
+builder.Services.AddDefaultFakerRules(rules =>
+{
+    rules["Phone"] = faker => "+44 " + faker.Phone.PhoneNumber();  // UK-specific format
+});
 
-//builder.Services.AddMockingConfigurations(config =>
-//{
-//    // Booking configuration
-//    config.RegisterConfiguration<Booking>(cfg =>
-//    {
-//        cfg
-//            .ForPropertyObject<Room>("Room")
-//            .ForPropertyObject<Contact>("PrimaryContact");
-//    });
+builder.Services.AddMockingConfigurations(config =>
+{
+    // Booking configuration
+    config.RegisterConfiguration<Booking>(cfg =>
+    {
+        cfg
+            .ForPropertyObject<Room>("Room")
+            .ForPropertyObject<Contact>("PrimaryContact");
+    });
 
-//    // Hotel configuration
-//    config.RegisterConfiguration<Hotel>(cfg =>
-//    {
-//        cfg
-//            .ForProperty("Name", faker => faker.Company.CompanyName())
-//            .ForPropertyObjectList<Room>("Rooms", 5)
-//            .ForPropertyObjectList<Booking>("Bookings", 5);
-//    });
+    // Hotel configuration
+    config.RegisterConfiguration<Hotel>(cfg =>
+    {
+        cfg
+            .ForProperty("Name", faker => faker.Company.CompanyName())
+            .ForPropertyObjectList<Room>("Rooms", 5)
+            .ForPropertyObjectList<Booking>("Bookings", 5);
+    });
 
-//    config.RegisterConfiguration<GetContactsResponse>(cfg =>
-//    {
-//        cfg
-//            .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5);
-//    });
+    config.RegisterConfiguration<GetContactsResponse>(cfg =>
+    {
+        cfg
+            .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5);
+    });
 
-//    config.RegisterConfiguration<GetHotelsResponse>(cfg =>
-//    {
-//        cfg
-//            .ForPropertyObjectList<GetHotelByIdResponse>("Hotels", 5);
-//    });
+    config.RegisterConfiguration<GetHotelsResponse>(cfg =>
+    {
+        cfg
+            .ForPropertyObjectList<GetHotelByIdResponse>("Hotels", 5);
+    });
 
-//    config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
-//    {
-//        cfg
-//            .ForProperty("Rooms", faker => ApiMockDataFactory.CreateMockObjects<Room>(5))
-//            .ForPropertyObjectList<Booking>("Bookings", 5);
-//    });
+    config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
+    {
+        cfg
+            .ForProperty("Rooms", faker => ApiMockDataFactory.CreateMockObjects<Room>(5))
+            .ForPropertyObjectList<Booking>("Bookings", 5);
+    });
 
-//});
+});
 
 var app = builder.Build();
 

@@ -4,6 +4,17 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+	<PackageId>ApiDocAndMock</PackageId>
+	  <Version>1.0.0</Version>
+	  <Authors>Gavin Park</Authors>
+	  <Company></Company>
+	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <RepositoryUrl>https://github.com/gpbultz/ApiDocAndMock</RepositoryUrl>
+	  <RepositoryType>git</RepositoryType>
+	  <PackageTags>mocking faker swagger minimalapi .net</PackageTags>
+	  <PackageProjectUrl>https://github.com/gpbultz/ApiDocAndMock</PackageProjectUrl>
+	  <PackageIcon>api.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,12 +22,20 @@
     <Folder Include="Domain\" />
   </ItemGroup>
 
-  <ItemGroup>
+	<ItemGroup>
+		<None Include ="api.png" Pack="true" PackagePath="/" />
+	</ItemGroup>
+
+	<ItemGroup>
     <PackageReference Include="Bogus" Version="35.6.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.11" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="7.2.0" />
   </ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE-THIRD-PARTY.md" Pack="true" PackagePath="LICENSE-THIRD-PARTY.md" />
+	</ItemGroup>
 
 </Project>
