@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Mocking;
+using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -27,6 +28,20 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             configureOptions?.Invoke(configurations);
 
             services.AddSingleton(configurations);
+            return services;
+        }
+
+        public static IServiceCollection AddDefaultFakerRules(this IServiceCollection services, Action<Dictionary<string, Func<Faker, object>>> configure)
+        {
+            var defaultRules = new Dictionary<string, Func<Faker, object>>();
+
+            configure?.Invoke(defaultRules);
+
+            foreach (var rule in defaultRules)
+            {
+                ApiMockDataFactory.AddDefaultFakerRule(rule.Key, rule.Value);
+            }
+
             return services;
         }
     }

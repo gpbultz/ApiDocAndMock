@@ -1,11 +1,23 @@
 ﻿using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
     public static class ApiDocAndMockExtensions
     {
+
+        public static IServiceCollection AddDocAndMock(this IServiceCollection services)
+        {
+            // Register wrapper only if it doesn't exist
+            if (!services.Any(sd => sd.ServiceType == typeof(MockConfigurationsFactoryWrapper)))
+            {
+                services.AddSingleton<MockConfigurationsFactoryWrapper>();
+            }
+            return services;
+        }
+
         /// <summary>
         /// Configures API mocking and documentation features for the application.
         /// </summary>

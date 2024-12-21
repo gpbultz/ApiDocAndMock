@@ -8,10 +8,33 @@ namespace ApiDocAndMock.Infrastructure.Mocking
     public static class ApiMockDataFactory
     {
         private static IServiceProvider _serviceProvider;
+        private const int NESTED_COUNT = 20;
+
+        private static readonly Dictionary<string, Func<Faker, object>> _defaultFakerRules = new()
+        {
+            ["Name"] = faker => faker.Name.FullName(),
+            ["Email"] = faker => faker.Internet.Email(),
+            ["Phone"] = faker => faker.Phone.PhoneNumber(),
+            ["Address"] = faker => faker.Address.FullAddress(),
+            ["City"] = faker => faker.Address.City(),
+            ["Region"] = faker => faker.Address.StateAbbr(),
+            ["PostalCode"] = faker => faker.Address.ZipCode(),
+            ["Country"] = faker => faker.Address.Country()
+        };
 
         public static void Initialize(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
+
+        /// <summary>
+        /// Add a default faker rule to the factory
+        /// </summary>
+        /// <param name="propertyName">Name of property to apply rule to</param>
+        /// <param name="fakerRule">faker type</param>
+        public static void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule)
+        {
+            _defaultFakerRules[propertyName] = fakerRule;
         }
 
         /// <summary>
@@ -20,7 +43,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <typeparam name="T">Type of object to create.</typeparam>
         /// <param name="nestedCount">Indicates the level of nesting for the object.</param>
         /// <returns>Mocked object.</returns>
-        public static T CreateMockObject<T>(int nestedCount = 5) where T : class, new()
+        public static T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
@@ -36,7 +59,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <param name="count">Number of objects to create.</param>
         /// <param name="nestedCount">Indicates the level of nesting for each object.</param>
         /// <returns>List of mocked objects.</returns>
-        public static List<T> CreateMockObjects<T>(int count = 1, int nestedCount = 5) where T : class, new()
+        public static List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var mockObjects = new List<T>();
             for (int i = 0; i < count; i++)
@@ -75,10 +98,14 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                         // Use the configured generator
                         value = generator(faker);
                     }
+                    else if (_defaultFakerRules.TryGetValue(property.Name, out var defaultGenerator))
+                    {
+                        value = defaultGenerator(faker);
+                    }
                     else
                     {
                         // Fallback: Dynamically generate data
-                        value = GenerateDefaultValueDynamically(property.PropertyType, faker, nestedCount);
+                        value = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, nestedCount);
                     }
 
                     property.SetValue(instance, value);
@@ -90,8 +117,14 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             }
         }
 
-        private static object GenerateDefaultValueDynamically(Type type, Faker faker, int nestedCount = 3)
+        private static object GenerateDefaultValueDynamically(string name, Type type, Faker faker, int nestedCount = NESTED_COUNT)
         {
+
+            if (_defaultFakerRules.TryGetValue(name, out var fakerRule))
+            {
+                return fakerRule(faker);
+            }
+
             // Prevent deep recursion for nested objects
             if (nestedCount <= 0)
             {
@@ -137,7 +170,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 var array = Array.CreateInstance(elementType, faker.Random.Int(1, 5));
                 for (var i = 0; i < array.Length; i++)
                 {
-                    array.SetValue(GenerateDefaultValueDynamically(elementType, faker, nestedCount - 1), i);
+                    array.SetValue(GenerateDefaultValueDynamically(name, elementType, faker, nestedCount - 1), i);
                 }
                 return array;
             }
@@ -150,7 +183,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 var list = (IList)Activator.CreateInstance(listType);
                 for (var i = 0; i < faker.Random.Int(1, 5); i++)
                 {
-                    list.Add(GenerateDefaultValueDynamically(genericType, faker, nestedCount - 1));
+                    list.Add(GenerateDefaultValueDynamically(name, genericType, faker, nestedCount - 1));
                 }
                 return list;
             }
@@ -165,8 +198,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
                 for (var i = 0; i < faker.Random.Int(1, 5); i++)
                 {
-                    var key = GenerateDefaultValueDynamically(keyType, faker, nestedCount - 1);
-                    var value = GenerateDefaultValueDynamically(valueType, faker, nestedCount - 1);
+                    var key = GenerateDefaultValueDynamically(name, keyType, faker, nestedCount - 1);
+                    var value = GenerateDefaultValueDynamically(name, valueType, faker, nestedCount - 1);
                     dictionary.Add(key, value);
                 }
 
@@ -184,7 +217,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                         continue; // Skip read-only or indexed properties
                     }
 
-                    var propertyValue = GenerateDefaultValueDynamically(property.PropertyType, faker, nestedCount - 1);
+                    var propertyValue = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, nestedCount - 1);
                     property.SetValue(instance, propertyValue);
                 }
                 return instance;
