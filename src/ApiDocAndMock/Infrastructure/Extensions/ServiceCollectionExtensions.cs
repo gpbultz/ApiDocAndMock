@@ -39,7 +39,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
             foreach (var rule in defaultRules)
             {
-                ApiMockDataFactoryStatic.AddDefaultFakerRule(rule.Key, rule.Value);
+                ApiMockDataFactory.AddDefaultFakerRule(rule.Key, rule.Value);
             }
 
             return services;

@@ -11,7 +11,7 @@ namespace TestApi.Infrastructure.API.Extensions
         {
             app.MapGet("/hotels", ([AsParameters] GetHotelsQuery query) =>
             {
-                var hotels = ApiMockDataFactoryStatic.CreateMockObject<GetHotelsResponse>();
+                var hotels = ApiMockDataFactory.CreateMockObject<GetHotelsResponse>();
                 hotels.PageNumber = query.Page ?? 1;
                 hotels.PageSize = query.PageSize ?? 10;
                 hotels.TotalCount = 50;
@@ -25,7 +25,7 @@ namespace TestApi.Infrastructure.API.Extensions
 
             app.MapGet("/hotels/{id}", (Guid id) =>
             {
-                var hotel = ApiMockDataFactoryStatic.CreateMockObjects<Hotel>(count: 1);
+                var hotel = ApiMockDataFactory.CreateMockObjects<Hotel>(count: 1);
                 hotel.FirstOrDefault().Id = id; // Assign ID from path
                 return Results.Ok(hotel);
             })

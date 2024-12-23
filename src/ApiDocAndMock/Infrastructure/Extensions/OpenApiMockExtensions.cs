@@ -24,7 +24,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate the mock example using the static factory
-                var mockExample = ApiMockDataFactoryStatic.CreateMockObjects<T>(1).First();
+                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(1).First();
 
                 // Set the request body in the OpenAPI operation
                 operation.RequestBody = new OpenApiRequestBody
@@ -54,7 +54,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate mock data
-                var mockExample = ApiMockDataFactoryStatic.CreateMockObjects<T>(count: 1).First();
+                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(count: 1).First();
 
                 // Define the response for Swagger
                 operation.Responses["200"] = new OpenApiResponse
@@ -95,7 +95,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate the mock examples using the static factory
-                var mockExamples = ApiMockDataFactoryStatic.CreateMockObjects<T>(count);
+                var mockExamples = ApiMockDataFactory.CreateMockObjects<T>(count);
 
                 // Set the response in the OpenAPI operation
                 operation.Responses["200"] = new OpenApiResponse
@@ -132,7 +132,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var mockExample = ApiMockDataFactoryStatic.CreateMockObject<T>();
+                var mockExample = ApiMockDataFactory.CreateMockObject<T>();
 
                 var id = mockExample.GetType().GetProperty(pageIdField)?.GetValue(mockExample)?.ToString();
 

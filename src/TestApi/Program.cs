@@ -71,7 +71,7 @@ builder.Services.AddMockingConfigurations(config =>
     config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
     {
         cfg
-            .ForProperty("Rooms", faker => ApiMockDataFactoryStatic.CreateMockObjects<Room>(5))
+            .ForProperty("Rooms", faker => ApiMockDataFactory.CreateMockObjects<Room>(5))
             .ForPropertyObjectList<Booking>("Bookings", 5);
     });
 

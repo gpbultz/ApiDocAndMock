@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
-    public static class ApiMockDataFactoryStatic
+    public static class ApiMockDataFactory
     {
         private static IServiceProvider _serviceProvider;
         private const int NESTED_COUNT = 20;

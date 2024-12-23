@@ -11,7 +11,7 @@ namespace TestApi.Infrastructure.API.Extensions
         {
             app.MapGet("/bookings", () =>
             {
-                var bookings = ApiMockDataFactoryStatic.CreateMockObjects<Booking>(count: 20);
+                var bookings = ApiMockDataFactory.CreateMockObjects<Booking>(count: 20);
                 return Results.Ok(bookings);
             })
             .WithMockResponseList<Booking>(count: 20)

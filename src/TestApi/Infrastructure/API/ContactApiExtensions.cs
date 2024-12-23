@@ -15,7 +15,7 @@ namespace TestApi.Infrastructure.API.Extensions
             // Get All Contacts
             app.MapGet("/contacts", ([FromServices] IMemoryDb db, [AsParameters] GetContactsQuery query) =>
             {
-                var response = ApiMockDataFactoryStatic
+                var response = ApiMockDataFactory
                                     .CreateMockObject<GetContactsResponse>(query.PageSize ?? 10)
                                     .WithPaginationAndLinks(
                                         totalCount: 100,
