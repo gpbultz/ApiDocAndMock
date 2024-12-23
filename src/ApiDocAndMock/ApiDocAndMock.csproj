@@ -26,8 +26,8 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<None Include ="api.png" Pack="true" PackagePath="/" />
-		<None Include="README.md" Pack="true" PackagePath="\"/>
+		<None Include="api.png" Pack="true" PackagePath="/" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="LICENSE-THIRD-PARTY.md" Pack="true" PackagePath="LICENSE-THIRD-PARTY.md" />
 	</ItemGroup>
 

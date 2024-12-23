@@ -1,7 +1,12 @@
-﻿using ApiDocAndMock.Infrastructure.Mocking;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Application.Models.Responses;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using System.IO;
 using System.Text.Json;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -19,7 +24,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate the mock example using the static factory
-                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(1).First();
+                var mockExample = ApiMockDataFactoryStatic.CreateMockObjects<T>(1).First();
 
                 // Set the request body in the OpenAPI operation
                 operation.RequestBody = new OpenApiRequestBody
@@ -49,7 +54,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate mock data
-                var mockExample = ApiMockDataFactory.CreateMockObjects<T>(count: 1).First();
+                var mockExample = ApiMockDataFactoryStatic.CreateMockObjects<T>(count: 1).First();
 
                 // Define the response for Swagger
                 operation.Responses["200"] = new OpenApiResponse
@@ -90,7 +95,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return builder.WithOpenApi(operation =>
             {
                 // Generate the mock examples using the static factory
-                var mockExamples = ApiMockDataFactory.CreateMockObjects<T>(count);
+                var mockExamples = ApiMockDataFactoryStatic.CreateMockObjects<T>(count);
 
                 // Set the response in the OpenAPI operation
                 operation.Responses["200"] = new OpenApiResponse
@@ -121,7 +126,70 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             });
         }
 
+
+        public static RouteHandlerBuilder WithEnrichedMockedResponse<T>(this RouteHandlerBuilder builder, bool includePages = false, bool includeLinks = false, string resourcePath = "", string pageIdField = "Id", int totalCount = 50, int pageSize = 10, int currentPage = 1)
+            where T : class, IApiResponse, new()
+        {
+            return builder.WithOpenApi(operation =>
+            {
+                var mockExample = ApiMockDataFactoryStatic.CreateMockObject<T>();
+
+                var id = mockExample.GetType().GetProperty(pageIdField)?.GetValue(mockExample)?.ToString();
+
+
+                if (includePages)
+                {
+                    var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+                    mockExample.Pagination = new PaginationMetadata
+                    {
+                        TotalCount = totalCount,
+                        PageSize = pageSize,
+                        PageNumber = currentPage,
+                        TotalPages = totalPages,
+                        First = $"{resourcePath}?page=1",
+                        Last = $"{resourcePath}?page={totalPages}",
+                        Next = currentPage < totalPages ? $"{resourcePath}?page={currentPage + 1}" : null,
+                        Prev = currentPage > 1 ? $"{resourcePath}?page={currentPage - 1}" : null
+                    };
+                }
+
+                if (includeLinks && !string.IsNullOrEmpty(id))
+                {
+                    // Replace {id} in the resource path if it exists
+                    var resolvedPath = resourcePath.Replace("{id}", id);
+
+                    mockExample.Links = new LinksContainer
+                    {
+                        Self = resolvedPath,
+                        Update = $"{resolvedPath}",
+                        Delete = $"{resolvedPath}"
+                    };
+                }
+                else if (includeLinks)
+                {
+                    // Fallback for endpoints without {id}
+                    mockExample.Links = new LinksContainer
+                    {
+                        Self = resourcePath,
+                        Update = $"{resourcePath}/update",
+                        Delete = $"{resourcePath}/delete"
+                    };
+                }
+
+                operation.Responses["200"] = new OpenApiResponse
+                {
+                    Description = "Successful response",
+                    Content = new Dictionary<string, OpenApiMediaType>
+                    {
+                        ["application/json"] = new OpenApiMediaType
+                        {
+                            Example = new OpenApiString(JsonSerializer.Serialize(mockExample))
+                        }
+                    }
+                };
+                return operation;
+            });
+        }
     }
-
-
 }

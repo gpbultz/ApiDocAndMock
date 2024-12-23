@@ -1,10 +1,10 @@
-﻿namespace TestApi.Application.Queries.Contacts
+﻿
+using ApiDocAndMock.Application.Models.Responses;
+
+namespace TestApi.Application.Queries.Contacts
 {
-    public class GetContactsResponse
+    public class GetContactsResponse : ApiResponseBase
     {
-        public int TotalCount { get; set; }
-        public int PageNumber { get; set; }
-        public int PageSize { get; set; }
         public List<GetContactByIdResponse> Contacts { get; set; }
     }
 }

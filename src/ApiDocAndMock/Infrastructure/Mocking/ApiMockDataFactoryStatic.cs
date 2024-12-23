@@ -1,11 +1,12 @@
-﻿using Bogus;
+﻿using ApiDocAndMock.Application.Models.Responses;
+using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections;
 using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
-    public static class ApiMockDataFactory
+    public static class ApiMockDataFactoryStatic
     {
         private static IServiceProvider _serviceProvider;
         private const int NESTED_COUNT = 20;
@@ -32,6 +33,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// </summary>
         /// <param name="propertyName">Name of property to apply rule to</param>
         /// <param name="fakerRule">faker type</param>
+        [Obsolete("Now available in IApiMockDataFactory")]
         public static void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule)
         {
             _defaultFakerRules[propertyName] = fakerRule;
@@ -43,12 +45,21 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <typeparam name="T">Type of object to create.</typeparam>
         /// <param name="nestedCount">Indicates the level of nesting for the object.</param>
         /// <returns>Mocked object.</returns>
+        [Obsolete("Now available in IApiMockDataFactory")]
         public static T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
-
+            
             ApplyMockRules(instance, faker, nestedCount);
+
+            if (instance is ApiResponseBase apiResponse)
+            {
+                // Default to null - will be populated based on request params
+                apiResponse.Pagination = null;
+                apiResponse.Links = null;
+            }
+
             return instance;
         }
 
@@ -59,6 +70,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <param name="count">Number of objects to create.</param>
         /// <param name="nestedCount">Indicates the level of nesting for each object.</param>
         /// <returns>List of mocked objects.</returns>
+        [Obsolete("Now available in IApiMockDataFactory")]
         public static List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var mockObjects = new List<T>();

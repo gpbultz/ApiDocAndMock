@@ -48,7 +48,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 TStored storedObject = customMapper != null
                     ? customMapper(request)
-                    : MapRequestToStored(request, ApiMockDataFactory.CreateMockObject<TStored>());
+                    : MapRequestToStored(request, ApiMockDataFactoryStatic.CreateMockObject<TStored>());
 
                 var idProperty = typeof(TStored).GetProperty(idFieldName);
                 if (idProperty != null && idProperty.CanWrite)
@@ -140,7 +140,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 // Prepare the response
                 var response = responseMapper != null
                     ? responseMapper(existingObject)
-                    : ApiMockDataFactory.CreateMockObject<TResponse>();
+                    : ApiMockDataFactoryStatic.CreateMockObject<TResponse>();
 
                 // Handle method outcomes
                 return methodOutcome switch
@@ -224,7 +224,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 if (existingObject == null && behaviour == DefaultMethodBehaviour.Return200)
                 {
-                    var mockResponse = ApiMockDataFactory.CreateMockObject<TResponse>();
+                    var mockResponse = ApiMockDataFactoryStatic.CreateMockObject<TResponse>();
                     return Results.Ok(mockResponse);
                 }
 
@@ -232,7 +232,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 var response = responseMapper != null
                     ? responseMapper(existingObject!)
-                    : ApiMockDataFactory.CreateMockObject<TResponse>();
+                    : ApiMockDataFactoryStatic.CreateMockObject<TResponse>();
 
                 return behaviour switch
                 {
@@ -319,7 +319,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     {
                         if (behaviour == NotFoundBehaviour.ReturnMockIfNotFound)
                         {
-                            var mockedItem = ApiMockDataFactory.CreateMockObject<T>();
+                            var mockedItem = ApiMockDataFactoryStatic.CreateMockObject<T>();
                             var idProperty = typeof(T).GetProperty(idFieldName);
                             if (idProperty != null && idProperty.CanWrite)
                             {

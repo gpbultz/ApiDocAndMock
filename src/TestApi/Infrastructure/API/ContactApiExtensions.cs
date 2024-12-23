@@ -15,15 +15,19 @@ namespace TestApi.Infrastructure.API.Extensions
             // Get All Contacts
             app.MapGet("/contacts", ([FromServices] IMemoryDb db, [AsParameters] GetContactsQuery query) =>
             {
-                var response = ApiMockDataFactory.CreateMockObject<GetContactsResponse>(query.PageSize ?? 10);
-                response.PageNumber = query.Page ?? 1;
-                response.PageSize = query.PageSize ?? 10;
-                response.TotalCount = 50;
+                var response = ApiMockDataFactoryStatic
+                                    .CreateMockObject<GetContactsResponse>(query.PageSize ?? 10)
+                                    .WithPaginationAndLinks(
+                                        totalCount: 100,
+                                        pageSize: query.PageSize ?? 10,
+                                        currentPage: query.Page ?? 1,
+                                        resourcePath: "/contacts"
+                                    ); 
 
                 return Results.Ok(response);
             })
             .Produces<GetContactsResponse>(200)
-            .WithMockResponse<GetContactsResponse>()       // Document response
+            .WithEnrichedMockedResponse<GetContactsResponse>(includePages: true)       // Document response
             .WithSummary("Retrieve all contacts", "Returns a paginated list of contacts with optional filtering by city.")
             .RequireBearerToken()
             .WithCommonResponses("401", "403", "429", "500")
