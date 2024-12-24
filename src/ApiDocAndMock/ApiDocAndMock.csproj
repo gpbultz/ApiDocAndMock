@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>ApiDocAndMock</PackageId>
-	  <Version>1.0.2</Version>
+	  <Version>1.1.0</Version>
 	  <Authors>gpbultz</Authors>
 	  <Company></Company>
 	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
@@ -20,14 +20,16 @@
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-  <ItemGroup>
+
+
+	<ItemGroup>
     <Folder Include="Application\Extensions\" />
     <Folder Include="Domain\" />
   </ItemGroup>
 
 	<ItemGroup>
-		<None Include ="api.png" Pack="true" PackagePath="/" />
-		<None Include="README.md" Pack="true" PackagePath="\"/>
+		<None Include="api.png" Pack="true" PackagePath="/" />
+		<None Include="README.md" Pack="true" PackagePath="\" />
 		<None Include="LICENSE-THIRD-PARTY.md" Pack="true" PackagePath="LICENSE-THIRD-PARTY.md" />
 	</ItemGroup>
 

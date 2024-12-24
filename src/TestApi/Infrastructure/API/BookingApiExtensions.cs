@@ -1,4 +1,5 @@
-﻿using ApiDocAndMock.Infrastructure.Extensions;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Extensions;
 using ApiDocAndMock.Infrastructure.Mocking;
 using TestApi.Domain.Entities;
 
@@ -9,9 +10,12 @@ namespace TestApi.Infrastructure.API.Extensions
     {
         public static void MapBookingEndpoints(this IEndpointRouteBuilder app)
         {
+            var serviceProvider = app.ServiceProvider;
+            var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
+
             app.MapGet("/bookings", () =>
             {
-                var bookings = ApiMockDataFactory.CreateMockObjects<Booking>(count: 20);
+                var bookings = mockDataFactory.CreateMockObjects<Booking>(count: 20);
                 return Results.Ok(bookings);
             })
             .WithMockResponseList<Booking>(count: 20)

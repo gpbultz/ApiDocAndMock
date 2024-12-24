@@ -1,4 +1,6 @@
-﻿using ApiDocAndMock.Infrastructure.Mocking;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Configurations;
+using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,11 +12,20 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
         public static IServiceCollection AddDocAndMock(this IServiceCollection services)
         {
-            // Register wrapper only if it doesn't exist
-            if (!services.Any(sd => sd.ServiceType == typeof(MockConfigurationsFactoryWrapper)))
+            services.AddHttpContextAccessor();
+
+            services.AddSingleton<IApiMockDataFactory, ApiMockDataFactory>();
+
+            // Pass IServiceProvider to MockConfigurationsFactory
+            services.AddSingleton<IMockConfigurationsFactory>(provider =>
             {
-                services.AddSingleton<MockConfigurationsFactoryWrapper>();
-            }
+                return new MockConfigurationsFactory(provider);
+            });
+
+            services.AddSingleton<CommonResponseConfigurations>();
+            services.AddSingleton<ICommonResponseConfigurations>(provider =>
+                provider.GetRequiredService<CommonResponseConfigurations>());
+
             return services;
         }
 
@@ -27,7 +38,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             // Set up the global service provider resolver
             ServiceResolver.SetServiceProvider(app.ApplicationServices);
-            ApiMockDataFactory.Initialize(app.ApplicationServices);
+            ServiceProviderHolder.Initialize(app.ApplicationServices);
+            ApiMockDataFactoryStatic.Initialize(app.ApplicationServices);
 
             if (useAuthentication)
             {

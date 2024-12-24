@@ -1,4 +1,5 @@
-﻿using ApiDocAndMock.Infrastructure.Extensions;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Extensions;
 using ApiDocAndMock.Infrastructure.Mocking;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
@@ -9,9 +10,12 @@ namespace TestApi.Infrastructure.API.Extensions
     {
         public static void MapHotelEndpoints(this IEndpointRouteBuilder app)
         {
+            var serviceProvider = app.ServiceProvider;
+            var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
+
             app.MapGet("/hotels", ([AsParameters] GetHotelsQuery query) =>
             {
-                var hotels = ApiMockDataFactory.CreateMockObject<GetHotelsResponse>();
+                var hotels = mockDataFactory.CreateMockObject<GetHotelsResponse>();
                 hotels.PageNumber = query.Page ?? 1;
                 hotels.PageSize = query.PageSize ?? 10;
                 hotels.TotalCount = 50;
@@ -25,7 +29,7 @@ namespace TestApi.Infrastructure.API.Extensions
 
             app.MapGet("/hotels/{id}", (Guid id) =>
             {
-                var hotel = ApiMockDataFactory.CreateMockObjects<Hotel>(count: 1);
+                var hotel = mockDataFactory.CreateMockObjects<Hotel>(count: 1);
                 hotel.FirstOrDefault().Id = id; // Assign ID from path
                 return Results.Ok(hotel);
             })

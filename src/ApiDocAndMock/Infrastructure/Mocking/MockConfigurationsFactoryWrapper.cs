@@ -10,14 +10,14 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 {
     public class MockConfigurationsFactoryWrapper
     {
-        public void RegisterConfiguration<T>(Action<MockConfigurationBuilder<T>> configure) where T : class
-        {
-            MockConfigurationsFactory.RegisterConfiguration(configure);
-        }
+        //public void RegisterConfiguration<T>(Action<MockConfigurationBuilder<T>> configure) where T : class
+        //{
+        //    MockConfigurationsFactory.RegisterConfiguration(configure);
+        //}
 
-        public Dictionary<string, Func<Faker, object>>? TryGetConfigurations<T>() where T : class
-        {
-            return MockConfigurationsFactory.TryGetConfigurations<T>();
-        }
+        //public Dictionary<string, Func<Faker, object>>? TryGetConfigurations<T>() where T : class
+        //{
+        //    return MockConfigurationsFactory.TryGetConfigurations<T>();
+        //}
     }
 }

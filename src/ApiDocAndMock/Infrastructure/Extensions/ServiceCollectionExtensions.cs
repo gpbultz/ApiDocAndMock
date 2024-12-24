@@ -1,46 +1,61 @@
-﻿using ApiDocAndMock.Infrastructure.Configurations;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Mocking;
+using ApiDocAndMock.Infrastructure.Utilities;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<MockConfigurationsFactoryWrapper> configure)
+        public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<IMockConfigurationsFactory> configure)
         {
             if (configure == null)
             {
                 throw new ArgumentNullException(nameof(configure));
             }
 
-            var wrapper = new MockConfigurationsFactoryWrapper();
-            configure(wrapper);
+            // Ensure the factory is registered without immediate resolution
+            services.TryAddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
 
-            services.AddSingleton(wrapper);
+            // Register configuration via IOptions
+            services.Configure<MockingConfigurationOptions>(options =>
+            {
+                options.Configure = configure;
+            });
+
+            // Apply configuration after the container is built
+            services.AddSingleton<IHostedService, ApplyMockConfigurationsHostedService>();
+
 
             return services;
         }
 
-        public static IServiceCollection AddCommonResponseConfigurations(this IServiceCollection services, Action<CommonResponseConfigurations>? configureOptions = null)
+        public static IServiceCollection AddCommonResponseConfigurations(this IServiceCollection services, Action<ICommonResponseConfigurations>? configureOptions = null)
         {
-            var configurations = new CommonResponseConfigurations();
-            configureOptions?.Invoke(configurations);
+            services.AddSingleton<ICommonResponseConfigurations>(provider =>
+            {
+                var configurations = new CommonResponseConfigurations();
+                configureOptions?.Invoke(configurations);
+                return configurations;
+            });
 
-            services.AddSingleton(configurations);
-            return services;
+                return services;
         }
 
         public static IServiceCollection AddDefaultFakerRules(this IServiceCollection services, Action<Dictionary<string, Func<Faker, object>>> configure)
         {
             var defaultRules = new Dictionary<string, Func<Faker, object>>();
-
             configure?.Invoke(defaultRules);
 
-            foreach (var rule in defaultRules)
+            // Defer configuration until after DI container is built
+            services.AddSingleton<IHostedService>(provider =>
             {
-                ApiMockDataFactory.AddDefaultFakerRule(rule.Key, rule.Value);
-            }
+                return new DefaultFakerRulesInitializer(provider, defaultRules);
+            });
 
             return services;
         }

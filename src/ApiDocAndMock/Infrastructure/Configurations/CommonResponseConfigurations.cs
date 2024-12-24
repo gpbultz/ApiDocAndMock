@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ApiDocAndMock.Application.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiDocAndMock.Infrastructure.Configurations
 {
-    public class CommonResponseConfigurations
+    public class CommonResponseConfigurations : ICommonResponseConfigurations
     {
         private readonly Dictionary<int, ProblemDetails> _responseExamples = new();
 

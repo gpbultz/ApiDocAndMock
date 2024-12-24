@@ -2,22 +2,17 @@
 using ApiDocAndMock.Application.Models.Responses;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Collections;
 using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
-    public class ApiMockDataFactory : IApiMockDataFactory
+    public static class ApiMockDataFactoryStatic
     {
+        private static IServiceProvider _serviceProvider;
         private const int NESTED_COUNT = 20;
-        private readonly IServiceProvider _serviceProvider;
-        public ApiMockDataFactory(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
 
-        private readonly Dictionary<string, Func<Faker, object>> _defaultFakerRules = new()
+        private static readonly Dictionary<string, Func<Faker, object>> _defaultFakerRules = new()
         {
             ["Name"] = faker => faker.Name.FullName(),
             ["Email"] = faker => faker.Internet.Email(),
@@ -29,12 +24,18 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             ["Country"] = faker => faker.Address.Country()
         };
 
+        public static void Initialize(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
+
         /// <summary>
         /// Add a default faker rule to the factory
         /// </summary>
         /// <param name="propertyName">Name of property to apply rule to</param>
         /// <param name="fakerRule">faker type</param>
-        public void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule)
+        [Obsolete("Use IApiMockDataFactory instead")]
+        public static void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule)
         {
             _defaultFakerRules[propertyName] = fakerRule;
         }
@@ -45,7 +46,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <typeparam name="T">Type of object to create.</typeparam>
         /// <param name="nestedCount">Indicates the level of nesting for the object.</param>
         /// <returns>Mocked object.</returns>
-        public  T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
+        [Obsolete("Use IApiMockDataFactory instead")]
+        public static T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
@@ -69,7 +71,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <param name="count">Number of objects to create.</param>
         /// <param name="nestedCount">Indicates the level of nesting for each object.</param>
         /// <returns>List of mocked objects.</returns>
-        public  List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
+        [Obsolete("Use IApiMockDataFactory instead")]
+        public static List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var mockObjects = new List<T>();
             for (int i = 0; i < count; i++)
@@ -79,18 +82,17 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return mockObjects;
         }
 
-        private  void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
+        private static void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
         {
             if (instance == null)
             {
                 throw new ArgumentNullException(nameof(instance), "Instance cannot be null.");
             }
-            var mockConfigurationsFactory = _serviceProvider.GetService<IMockConfigurationsFactory>();
-
+            var factory = _serviceProvider?.GetRequiredService<IMockConfigurationsFactory>();
             var type = typeof(T);
 
             // Retrieve the mock rules for the current type
-            var mockRules = mockConfigurationsFactory?.TryGetConfigurations<T>();
+            var mockRules = factory?.TryGetConfigurations<T>();
 
             foreach (var property in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
             {
@@ -127,7 +129,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             }
         }
 
-        private  object GenerateDefaultValueDynamically(string name, Type type, Faker faker, int nestedCount = NESTED_COUNT)
+        private static object GenerateDefaultValueDynamically(string name, Type type, Faker faker, int nestedCount = NESTED_COUNT)
         {
 
             if (_defaultFakerRules.TryGetValue(name, out var fakerRule))

@@ -1,11 +1,19 @@
-﻿using ApiDocAndMock.Infrastructure.Mocking;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Mocking;
 using Bogus;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Configurations
 {
     public class MockConfigurationBuilder<T> where T : class
     {
         private readonly Dictionary<string, Func<Faker, object>> _propertyConfigurations = new();
+        private readonly IServiceProvider _serviceProvider;  // Inject IServiceProvider
+
+        public MockConfigurationBuilder(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
 
         public MockConfigurationBuilder<T> ForProperty(string propertyName, Func<Faker, object> generator)
         {
@@ -13,17 +21,24 @@ namespace ApiDocAndMock.Infrastructure.Configurations
             return this;
         }
 
-        // For a single nested object
         public MockConfigurationBuilder<T> ForPropertyObject<TNested>(string propertyName) where TNested : class, new()
         {
-            _propertyConfigurations[propertyName] = faker => ApiMockDataFactory.CreateMockObject<TNested>();
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                // Resolve IApiMockDataFactory lazily
+                var mockDataFactory = _serviceProvider.GetRequiredService<IApiMockDataFactory>();
+                return mockDataFactory.CreateMockObject<TNested>();
+            };
             return this;
         }
 
-        // For a list of nested objects
         public MockConfigurationBuilder<T> ForPropertyObjectList<TNested>(string propertyName, int count = 5) where TNested : class, new()
         {
-            _propertyConfigurations[propertyName] = faker => ApiMockDataFactory.CreateMockObjects<TNested>(count);
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                var mockDataFactory = _serviceProvider.GetRequiredService<IApiMockDataFactory>();
+                return mockDataFactory.CreateMockObjects<TNested>(count);
+            };
             return this;
         }
 
