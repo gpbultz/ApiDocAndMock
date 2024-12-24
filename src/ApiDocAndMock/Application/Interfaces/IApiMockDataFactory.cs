@@ -12,6 +12,5 @@ namespace ApiDocAndMock.Application.Interfaces
         void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule);
         T CreateMockObject<T>(int nestedCount = 20) where T : class, new();
         List<T> CreateMockObjects<T>(int count = 1, int nestedCount = 20) where T : class, new();
-
     }
 }

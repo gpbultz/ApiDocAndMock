@@ -31,9 +31,25 @@ namespace ApiDocAndMock.Infrastructure.Data
             if (!_store.ContainsKey(type)) return null;
 
             var property = type.GetProperty(fieldName);
-            if (property == null) throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
+            if (property == null)
+                throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
 
-            return _store[type].Cast<T>().FirstOrDefault(item => property.GetValue(item)?.Equals(value) == true);
+            object? convertedValue;
+            if (property.PropertyType == typeof(Guid) && value is string stringValue)
+            {
+                if (!Guid.TryParse(stringValue, out var guidValue))
+                {
+                    return null;
+                }
+                convertedValue = guidValue;
+            }
+            else
+            {
+                convertedValue = Convert.ChangeType(value, property.PropertyType);
+            }
+
+            return _store[type].Cast<T>().FirstOrDefault(item =>
+                property.GetValue(item)?.Equals(convertedValue) == true);
         }
 
         public bool Update<T>(string fieldName, object value, T updatedItem) where T : class
@@ -42,28 +58,61 @@ namespace ApiDocAndMock.Infrastructure.Data
             if (!_store.ContainsKey(type)) return false;
 
             var property = type.GetProperty(fieldName);
-            if (property == null) throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
+            if (property == null)
+                throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
 
-            var index = _store[type].FindIndex(item => property.GetValue(item)?.Equals(value) == true);
+            object? convertedValue;
+            if (property.PropertyType == typeof(Guid) && value is string stringValue)
+            {
+                if (!Guid.TryParse(stringValue, out var guidValue))
+                {
+                    return false;
+                }
+                convertedValue = guidValue;
+            }
+            else
+            {
+                convertedValue = Convert.ChangeType(value, property.PropertyType);
+            }
+
+            var index = _store[type].FindIndex(item => property.GetValue(item)?.Equals(convertedValue) == true);
+
             if (index == -1) return false;
 
             _store[type][index] = updatedItem;
             return true;
         }
-
         public bool Delete<T>(string fieldName, object value) where T : class
         {
             var type = typeof(T);
             if (!_store.ContainsKey(type)) return false;
 
             var property = type.GetProperty(fieldName);
-            if (property == null) throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
+            if (property == null)
+                throw new ArgumentException($"Field {fieldName} does not exist on type {type.Name}");
 
-            var item = _store[type].Cast<T>().FirstOrDefault(i => property.GetValue(i)?.Equals(value) == true);
+            object? convertedValue;
+            if (property.PropertyType == typeof(Guid) && value is string stringValue)
+            {
+                if (!Guid.TryParse(stringValue, out var guidValue))
+                {
+                    return false; 
+                }
+                convertedValue = guidValue;
+            }
+            else
+            {
+                convertedValue = Convert.ChangeType(value, property.PropertyType);
+            }
+
+            var item = _store[type].Cast<T>().FirstOrDefault(i =>
+                property.GetValue(i)?.Equals(convertedValue) == true);
+
             if (item == null) return false;
 
             _store[type].Remove(item);
             return true;
         }
+
     }
 }

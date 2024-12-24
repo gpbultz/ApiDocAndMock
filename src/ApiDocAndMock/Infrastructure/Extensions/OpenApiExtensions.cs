@@ -1,6 +1,9 @@
-﻿using ApiDocAndMock.Infrastructure.Configurations;
+﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.ComponentModel.DataAnnotations;
@@ -76,22 +79,35 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 operation.Parameters ??= new List<OpenApiParameter>();
 
-                operation.Parameters.Add(new OpenApiParameter
+                var existingParameter = operation.Parameters.FirstOrDefault(p => p.Name.ToLower() == name.ToLower());
+
+                if (existingParameter != null)
                 {
-                    Name = name,
-                    In = ParameterLocation.Path,
-                    Description = description,
-                    Required = true,
-                    Schema = new OpenApiSchema
+                    existingParameter.Description = description;
+                    existingParameter.Schema ??= new OpenApiSchema();
+                    existingParameter.Schema.Type = type;
+                    existingParameter.Schema.Format = format;
+                }
+                else
+                {
+                    operation.Parameters.Add(new OpenApiParameter
                     {
-                        Type = type,
-                        Format = format
-                    }
-                });
+                        Name = name,
+                        In = ParameterLocation.Path,
+                        Description = description,
+                        Required = true,
+                        Schema = new OpenApiSchema
+                        {
+                            Type = type,
+                            Format = format
+                        }
+                    });
+                }
 
                 return operation;
             });
         }
+
 
         /// <summary>
         /// Add a summary for the endpoint to the Swagger documentation
@@ -232,10 +248,24 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <returns></returns>
         public static RouteHandlerBuilder WithCommonResponses(this RouteHandlerBuilder builder, params string[] statusCodes)
         {
-            var responseConfigurations = ServiceResolver.GetService<CommonResponseConfigurations>();
+            
 
             return builder.WithOpenApi(operation =>
             {
+                var httpContextAccessor = ResolveHttpContextAccessor();
+
+                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
+                                      ?? ServiceProviderHolder.ServiceProvider;
+
+                if (serviceProvider == null)
+                {
+                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
+                }
+
+                // Resolve IApiMockDataFactory from DI
+                var mockDataFactory = serviceProvider.GetRequiredService<IMockConfigurationsFactory>();
+
+                var responseConfigurations = ServiceResolver.GetService<CommonResponseConfigurations>();
                 foreach (var statusCode in statusCodes)
                 {
                     if (int.TryParse(statusCode, out var parsedStatusCode))
@@ -304,6 +334,13 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 errors = validationErrors
             };
+        }
+
+        private static IHttpContextAccessor? ResolveHttpContextAccessor()
+        {
+            // Static service provider to resolve IHttpContextAccessor once
+            return ServiceProviderHolder.ServiceProvider
+                ?.GetService<IHttpContextAccessor>();
         }
     }
 }

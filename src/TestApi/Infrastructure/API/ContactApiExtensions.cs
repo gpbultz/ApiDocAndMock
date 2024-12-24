@@ -12,10 +12,13 @@ namespace TestApi.Infrastructure.API.Extensions
     {
         public static void MapContactEndpoints(this IEndpointRouteBuilder app)
         {
+            var serviceProvider = app.ServiceProvider;
+            var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
+
             // Get All Contacts
             app.MapGet("/contacts", ([FromServices] IMemoryDb db, [AsParameters] GetContactsQuery query) =>
             {
-                var response = ApiMockDataFactory
+                var response = mockDataFactory
                                     .CreateMockObject<GetContactsResponse>(query.PageSize ?? 10)
                                     .WithPaginationAndLinks(
                                         totalCount: 100,
@@ -53,7 +56,7 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithMockRequest<UpdateContactCommand>()
             .WithStaticResponse("201", new UpdateContactResponse { Result = "updated" })
             .WithPathParameter(name: "id", description: "The unique identifier of the contact to update.")
-            .UpdateMockWithMemoryDb<UpdateContactCommand, GetContactByIdResponse, UpdateContactResponse>()
+            .UpdateMockWithMemoryDb<UpdateContactCommand, GetContactByIdResponse, UpdateContactResponse>(responseMapper: obj => new UpdateContactResponse { Result = "success"})
             .RequireBearerToken()
             .Produces<UpdateContactResponse>(200)
             .Produces<UpdateContactResponse>(201)
@@ -62,11 +65,11 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithSummary("Update existing contact", "Updates an existing contact or creates new contact if queried contact does not exist");
 
             //Delete contact by Id
-            app.MapDelete("/contacts/{id:guid}", () =>
+            app.MapDelete("/contacts/{id:guid}", (Guid id) =>
             {
                 return Results.NoContent();
             })
-            .WithPathParameter(name: "id", description: "The unique identifier of the contact to delete.")
+            .WithPathParameter(name: "Id", description: "The unique identifier of the contact to delete.")
             .DeleteMockWithMemoryDb<GetContactByIdResponse, DeleteContactResponse>()
             .RequireBearerToken();
             

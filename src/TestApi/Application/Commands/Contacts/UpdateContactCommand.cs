@@ -5,8 +5,6 @@ namespace TestApi.Application.Commands.Contacts
 {
     public class UpdateContactCommand
     {
-        [Required]
-        public Guid Id { get; set; }
 
         [Required]
         [SwaggerSchema("The full name of the contact.")]
