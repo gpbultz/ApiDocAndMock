@@ -20,7 +20,14 @@
 	  <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
-
+	<PropertyGroup>
+		<Version>1.1.0</Version>
+		<PackageReleaseNotes>
+			- Refactored DI for ApiMockDataFactory and MockConfigurationsFactory
+			- Fixed MemoryDb type conversion issues (GetByField, Update, Delete)
+			- Resolved path parameter case sensitivity issues in Swagger
+		</PackageReleaseNotes>
+	</PropertyGroup>
 
 	<ItemGroup>
     <Folder Include="Application\Extensions\" />
