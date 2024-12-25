@@ -1,6 +1,5 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
-using ApiDocAndMock.Infrastructure.Mocking;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
 

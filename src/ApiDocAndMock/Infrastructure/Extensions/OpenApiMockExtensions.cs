@@ -1,14 +1,11 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Application.Models.Responses;
-using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using System.IO;
 using System.Text.Json;
 
 namespace ApiDocAndMock.Infrastructure.Extensions

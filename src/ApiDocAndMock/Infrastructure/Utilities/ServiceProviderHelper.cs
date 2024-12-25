@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Utilities
 {
@@ -37,14 +32,9 @@ namespace ApiDocAndMock.Infrastructure.Utilities
             return _serviceProvider.GetRequiredService(serviceType);
         }
 
-        public static IHttpContextAccessor? ResolveHttpContextAccessor()
-        {
-            return _serviceProvider?.GetService<IHttpContextAccessor>();
-        }
-
         public static IServiceProvider ResolveServiceProvider()
         {
-            var httpContextAccessor = ResolveHttpContextAccessor();
+            var httpContextAccessor = _serviceProvider?.GetService<IHttpContextAccessor>();
 
             var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
                                   ?? _serviceProvider;

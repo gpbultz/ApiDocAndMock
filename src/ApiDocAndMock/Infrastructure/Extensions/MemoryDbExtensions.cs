@@ -1,6 +1,5 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Data;
-using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -90,8 +89,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <param name="responseMapper">Define any value mapping for TResponse, otherwise a TResponse will be mocked</param>
         /// <param name="defaultMethodOutcome">Set by querystring parameter methodOutcome to simulate a 200, 201 or 204 response</param>
         /// <param name="locationPath">Path that updated resource would be accessible from to be written to response header</param>
-        public static RouteHandlerBuilder UpdateMockWithMemoryDb<TRequest, TStored, TResponse>(this RouteHandlerBuilder builder, string sourceIdFieldName = "Id", string queryIdFieldName = "Id", 
-                        Func<TRequest, TStored>? customMapper = null, Func<TStored, TResponse>? responseMapper = null,  string? defaultMethodOutcome = "Return200", string? locationPath = "")
+        public static RouteHandlerBuilder UpdateMockWithMemoryDb<TRequest, TStored, TResponse>(this RouteHandlerBuilder builder, string sourceIdFieldName = "Id", string queryIdFieldName = "Id",
+                        Func<TRequest, TStored>? customMapper = null, Func<TStored, TResponse>? responseMapper = null, string? defaultMethodOutcome = "Return200", string? locationPath = "")
             where TRequest : class
             where TStored : class, new()
             where TResponse : class, new()
@@ -216,7 +215,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 var mockFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
 
                 var id = context.GetArgument<object>(0);
-                
+
                 var query = context.HttpContext.Request.Query;
 
                 var behaviour = defaultMethodBehaviour;
@@ -344,7 +343,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     }
 
                     var id = context.GetArgument<object>(0);
-                    
+
                     var behaviour = defaultBehaviour;
                     if (query.TryGetValue("methodOutcome", out var outcome))
                     {

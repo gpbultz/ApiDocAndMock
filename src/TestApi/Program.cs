@@ -1,11 +1,10 @@
 
 using ApiDocAndMock.Infrastructure.Extensions;
-using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Mvc;
-using TestApi.Infrastructure.API.Extensions;
 using TestApi.Application.Queries.Contacts;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
+using TestApi.Infrastructure.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();

@@ -1,9 +1,7 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Application.Models.Responses;
 using Bogus;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Collections;
 using System.Reflection;
 
@@ -24,11 +22,11 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <typeparam name="T">Type of object to create.</typeparam>
         /// <param name="nestedCount">Indicates the level of nesting for the object.</param>
         /// <returns>Mocked object.</returns>
-        public  T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
+        public T CreateMockObject<T>(int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
-            
+
             ApplyMockRules(instance, faker, nestedCount);
 
             if (instance is ApiResponseBase apiResponse)
@@ -48,7 +46,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         /// <param name="count">Number of objects to create.</param>
         /// <param name="nestedCount">Indicates the level of nesting for each object.</param>
         /// <returns>List of mocked objects.</returns>
-        public  List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
+        public List<T> CreateMockObjects<T>(int count = 1, int nestedCount = NESTED_COUNT) where T : class, new()
         {
             var mockObjects = new List<T>();
             for (int i = 0; i < count; i++)
@@ -58,7 +56,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return mockObjects;
         }
 
-        private  void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
+        private void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
         {
             if (instance == null)
             {
@@ -100,7 +98,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             }
         }
 
-        private  object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
+        private object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
         {
 
             if (configurations.TryGetValue(name, out var fakerRule))

@@ -1,7 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Configurations;
 using Bogus;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {

@@ -51,7 +51,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         {
             var faker = new Faker();
             var instance = Activator.CreateInstance<T>();
-            
+
             ApplyMockRules(instance, faker, nestedCount);
 
             if (instance is ApiResponseBase apiResponse)
