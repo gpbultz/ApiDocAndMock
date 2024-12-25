@@ -1,6 +1,7 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Application.Models.Responses;
 using Bogus;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections;
@@ -15,28 +16,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         public ApiMockDataFactory(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
-        }
-
-        private readonly Dictionary<string, Func<Faker, object>> _defaultFakerRules = new()
-        {
-            ["Name"] = faker => faker.Name.FullName(),
-            ["Email"] = faker => faker.Internet.Email(),
-            ["Phone"] = faker => faker.Phone.PhoneNumber(),
-            ["Address"] = faker => faker.Address.FullAddress(),
-            ["City"] = faker => faker.Address.City(),
-            ["Region"] = faker => faker.Address.StateAbbr(),
-            ["PostalCode"] = faker => faker.Address.ZipCode(),
-            ["Country"] = faker => faker.Address.Country()
-        };
-
-        /// <summary>
-        /// Add a default faker rule to the factory
-        /// </summary>
-        /// <param name="propertyName">Name of property to apply rule to</param>
-        /// <param name="fakerRule">faker type</param>
-        public void AddDefaultFakerRule(string propertyName, Func<Faker, object> fakerRule)
-        {
-            _defaultFakerRules[propertyName] = fakerRule;
         }
 
         /// <summary>
@@ -103,19 +82,13 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 {
                     object value;
 
-                    if (mockRules != null && mockRules.TryGetValue(property.Name, out var generator))
+                    if (mockRules.TryGetValue(property.Name, out var generator))
                     {
-                        // Use the configured generator
                         value = generator(faker);
-                    }
-                    else if (_defaultFakerRules.TryGetValue(property.Name, out var defaultGenerator))
-                    {
-                        value = defaultGenerator(faker);
                     }
                     else
                     {
-                        // Fallback: Dynamically generate data
-                        value = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, nestedCount);
+                        value = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, mockRules, nestedCount);
                     }
 
                     property.SetValue(instance, value);
@@ -127,10 +100,10 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             }
         }
 
-        private  object GenerateDefaultValueDynamically(string name, Type type, Faker faker, int nestedCount = NESTED_COUNT)
+        private  object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
         {
 
-            if (_defaultFakerRules.TryGetValue(name, out var fakerRule))
+            if (configurations.TryGetValue(name, out var fakerRule))
             {
                 return fakerRule(faker);
             }
@@ -180,7 +153,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 var array = Array.CreateInstance(elementType, faker.Random.Int(1, 5));
                 for (var i = 0; i < array.Length; i++)
                 {
-                    array.SetValue(GenerateDefaultValueDynamically(name, elementType, faker, nestedCount - 1), i);
+                    array.SetValue(GenerateDefaultValueDynamically(name, elementType, faker, configurations, nestedCount - 1), i);
                 }
                 return array;
             }
@@ -193,7 +166,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 var list = (IList)Activator.CreateInstance(listType);
                 for (var i = 0; i < faker.Random.Int(1, 5); i++)
                 {
-                    list.Add(GenerateDefaultValueDynamically(name, genericType, faker, nestedCount - 1));
+                    list.Add(GenerateDefaultValueDynamically(name, genericType, faker, configurations, nestedCount - 1));
                 }
                 return list;
             }
@@ -208,8 +181,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
                 for (var i = 0; i < faker.Random.Int(1, 5); i++)
                 {
-                    var key = GenerateDefaultValueDynamically(name, keyType, faker, nestedCount - 1);
-                    var value = GenerateDefaultValueDynamically(name, valueType, faker, nestedCount - 1);
+                    var key = GenerateDefaultValueDynamically(name, keyType, faker, configurations, nestedCount - 1);
+                    var value = GenerateDefaultValueDynamically(name, valueType, faker, configurations, nestedCount - 1);
                     dictionary.Add(key, value);
                 }
 
@@ -227,7 +200,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                         continue; // Skip read-only or indexed properties
                     }
 
-                    var propertyValue = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, nestedCount - 1);
+                    var propertyValue = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, configurations, nestedCount - 1);
                     property.SetValue(instance, propertyValue);
                 }
                 return instance;

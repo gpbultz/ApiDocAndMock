@@ -71,6 +71,7 @@ builder.Services.AddMockingConfigurations(config =>
     config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
     {
         cfg
+            .ForProperty("Name", faker => faker.Company.CompanyName())
             .ForPropertyObjectList<Room>("Rooms", 5)
             .ForPropertyObjectList<Booking>("Bookings", 5);
     });
@@ -83,9 +84,9 @@ var app = builder.Build();
 app.UseApiDocAndMock(useAuthentication: true, useMockOutcome: true);
 
 app.UseHttpsRedirection();
-app.MapContactEndpoints();
+//app.MapContactEndpoints();
 app.MapHotelEndpoints();
-app.MapBookingEndpoints();
+//app.MapBookingEndpoints();
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -13,23 +13,28 @@ namespace ApiDocAndMock.Infrastructure.Extensions
     {
         public static IServiceCollection AddMockingConfigurations(this IServiceCollection services, Action<IMockConfigurationsFactory> configure)
         {
-            if (configure == null)
-            {
-                throw new ArgumentNullException(nameof(configure));
-            }
-
-            // Ensure the factory is registered without immediate resolution
             services.TryAddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
 
-            // Register configuration via IOptions
             services.Configure<MockingConfigurationOptions>(options =>
             {
                 options.Configure = configure;
             });
 
-            // Apply configuration after the container is built
-            services.AddSingleton<IHostedService, ApplyMockConfigurationsHostedService>();
+            services.AddSingleton<IHostedService, ApplyConfigurationsHostedService>();
 
+            return services;
+        }
+
+        public static IServiceCollection AddDefaultFakerRules(this IServiceCollection services, Action<Dictionary<string, Func<Faker, object>>> configure)
+        {
+            services.TryAddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
+
+            services.Configure<FakerRuleOptions>(options =>
+            {
+                options.Configure = configure;
+            });
+
+            services.AddSingleton<IHostedService, ApplyConfigurationsHostedService>();
 
             return services;
         }
@@ -46,18 +51,5 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 return services;
         }
 
-        public static IServiceCollection AddDefaultFakerRules(this IServiceCollection services, Action<Dictionary<string, Func<Faker, object>>> configure)
-        {
-            var defaultRules = new Dictionary<string, Func<Faker, object>>();
-            configure?.Invoke(defaultRules);
-
-            // Defer configuration until after DI container is built
-            services.AddSingleton<IHostedService>(provider =>
-            {
-                return new DefaultFakerRulesInitializer(provider, defaultRules);
-            });
-
-            return services;
-        }
     }
 }
