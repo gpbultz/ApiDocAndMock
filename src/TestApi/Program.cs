@@ -84,9 +84,9 @@ var app = builder.Build();
 app.UseApiDocAndMock(useAuthentication: true, useMockOutcome: true);
 
 app.UseHttpsRedirection();
-//app.MapContactEndpoints();
+app.MapContactEndpoints();
 app.MapHotelEndpoints();
-//app.MapBookingEndpoints();
+app.MapBookingEndpoints();
 
 app.UseSwagger();
 app.UseSwaggerUI();

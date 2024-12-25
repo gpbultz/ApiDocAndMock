@@ -248,24 +248,16 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <returns></returns>
         public static RouteHandlerBuilder WithCommonResponses(this RouteHandlerBuilder builder, params string[] statusCodes)
         {
-            
-
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
-
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
+                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
 
                 // Resolve IApiMockDataFactory from DI
                 var mockDataFactory = serviceProvider.GetRequiredService<IMockConfigurationsFactory>();
 
-                var responseConfigurations = ServiceResolver.GetService<CommonResponseConfigurations>();
+                // Use ServiceProviderHelper instead of ServiceResolver
+                var responseConfigurations = ServiceProviderHelper.GetService<CommonResponseConfigurations>();
+
                 foreach (var statusCode in statusCodes)
                 {
                     if (int.TryParse(statusCode, out var parsedStatusCode))
@@ -334,13 +326,6 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 errors = validationErrors
             };
-        }
-
-        private static IHttpContextAccessor? ResolveHttpContextAccessor()
-        {
-            // Static service provider to resolve IHttpContextAccessor once
-            return ServiceProviderHolder.ServiceProvider
-                ?.GetService<IHttpContextAccessor>();
         }
     }
 }

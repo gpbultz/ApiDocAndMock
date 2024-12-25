@@ -37,8 +37,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         public static IApplicationBuilder UseApiDocAndMock(this IApplicationBuilder app, bool useAuthentication = false, bool useMockOutcome = false)
         {
             // Set up the global service provider resolver
-            ServiceResolver.SetServiceProvider(app.ApplicationServices);
-            ServiceProviderHolder.Initialize(app.ApplicationServices);
+            ServiceProviderHelper.Initialize(app.ApplicationServices);
             ApiMockDataFactoryStatic.Initialize(app.ApplicationServices);
 
             if (useAuthentication)

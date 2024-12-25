@@ -25,15 +25,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
-
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
+                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
 
                 // Resolve IApiMockDataFactory from DI
                 var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
@@ -68,15 +60,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
+                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
 
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
                 // Resolve IApiMockDataFactory from DI
                 var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
 
@@ -121,15 +106,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
+                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
 
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
                 // Resolve IApiMockDataFactory from DI
                 var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
 
@@ -171,15 +149,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
-
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
+                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
 
                 // Resolve IApiMockDataFactory from DI
                 var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
@@ -242,13 +212,6 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 };
                 return operation;
             });
-        }
-
-        private static IHttpContextAccessor? ResolveHttpContextAccessor()
-        {
-            // Static service provider to resolve IHttpContextAccessor once
-            return ServiceProviderHolder.ServiceProvider
-                ?.GetService<IHttpContextAccessor>();
         }
     }
 }

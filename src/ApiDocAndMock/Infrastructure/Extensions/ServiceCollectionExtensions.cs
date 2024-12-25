@@ -48,7 +48,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 return configurations;
             });
 
-                return services;
+            return services;
         }
 
     }
