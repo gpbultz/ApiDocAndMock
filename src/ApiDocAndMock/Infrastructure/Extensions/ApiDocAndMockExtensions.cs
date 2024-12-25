@@ -38,7 +38,6 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             // Set up the global service provider resolver
             ServiceProviderHelper.Initialize(app.ApplicationServices);
-            ApiMockDataFactoryStatic.Initialize(app.ApplicationServices);
 
             if (useAuthentication)
             {

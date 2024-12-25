@@ -164,9 +164,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                         Type = "string",
                         Enum = new List<IOpenApiAny>
                         {
-                    new OpenApiString("Return200"),
-                    new OpenApiString("Return201"),
-                    new OpenApiString("Return204")
+                            new OpenApiString("Return200"),
+                            new OpenApiString("Return201"),
+                            new OpenApiString("Return204")
                         }
                     }
                 });
