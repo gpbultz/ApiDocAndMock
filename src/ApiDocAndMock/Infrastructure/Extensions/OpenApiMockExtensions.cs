@@ -22,13 +22,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
 
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
-
-                // Generate the mock example using the static factory
-                var mockExample = mockDataFactory.CreateMockObjects<T>(1).First();
+                var mockExample = mockDataFactory.CreateMockObject<T>();
 
                 // Set the request body in the OpenAPI operation
                 operation.RequestBody = new OpenApiRequestBody
@@ -57,13 +53,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
-
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
-
-                // Generate mock data
-                var mockExample = mockDataFactory.CreateMockObjects<T>(count: 1).First();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
+                var mockExample = mockDataFactory.CreateMockObject<T>();
 
                 // Define the response for Swagger
                 operation.Responses["200"] = new OpenApiResponse
@@ -103,12 +94,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
-
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
-
-                // Generate the mock examples using the static factory
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
                 var mockExamples = mockDataFactory.CreateMockObjects<T>(count);
 
                 // Set the response in the OpenAPI operation
@@ -146,10 +132,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
-
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IApiMockDataFactory>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
 
                 var mockExample = mockDataFactory.CreateMockObject<T>();
 

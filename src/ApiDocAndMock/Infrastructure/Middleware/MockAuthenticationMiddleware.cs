@@ -23,11 +23,21 @@ namespace ApiDocAndMock.Infrastructure.Middleware
 
                 if (string.Equals(token, "mock-token", StringComparison.OrdinalIgnoreCase))
                 {
-                    var claims = new[]
+                    var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, "Mock User")
+                };
+
+                    // Retrieve Roles from Headers (X-Roles)
+                    if (context.Request.Headers.TryGetValue("X-Roles", out var rolesHeader))
                     {
-                        new Claim(ClaimTypes.Name, "Mock User"),
-                        new Claim(ClaimTypes.Role, "User"),
-                    };
+                        var roles = rolesHeader.ToString().Split(',');
+
+                        foreach (var role in roles)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, role.Trim()));
+                        }
+                    }
 
                     var identity = new ClaimsIdentity(claims, "Mock");
                     context.User = new ClaimsPrincipal(identity);

@@ -34,17 +34,9 @@ namespace ApiDocAndMock.Infrastructure.Utilities
 
         public static IServiceProvider ResolveServiceProvider()
         {
-            var httpContextAccessor = _serviceProvider?.GetService<IHttpContextAccessor>();
-
-            var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                  ?? _serviceProvider;
-
-            if (serviceProvider == null)
-            {
-                throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-            }
-
-            return serviceProvider;
+            return _serviceProvider?.GetService<IHttpContextAccessor>()?.HttpContext?.RequestServices
+                   ?? _serviceProvider
+                   ?? throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
         }
     }
 

@@ -9,11 +9,9 @@ namespace ApiDocAndMock.Infrastructure.Mocking
         private readonly Dictionary<Type, Dictionary<string, Func<Faker, object>>> _configurations = new();
         private readonly Dictionary<string, Func<Faker, object>> _defaultFakerRules = new();
 
-        private readonly IServiceProvider _serviceProvider;
-
-        public MockConfigurationsFactory(IServiceProvider serviceProvider)
+        public MockConfigurationsFactory()
         {
-            _serviceProvider = serviceProvider;
+            //_serviceProvider = serviceProvider;
 
             _defaultFakerRules = new()
             {
@@ -30,7 +28,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
         public void RegisterConfiguration<T>(Action<MockConfigurationBuilder<T>> configure) where T : class
         {
-            var builder = new MockConfigurationBuilder<T>(_serviceProvider);
+            var builder = new MockConfigurationBuilder<T>();
             configure(builder);
             _configurations[typeof(T)] = builder.Build();
         }

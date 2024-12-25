@@ -1,4 +1,5 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Utilities;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,12 +8,6 @@ namespace ApiDocAndMock.Infrastructure.Configurations
     public class MockConfigurationBuilder<T> where T : class
     {
         private readonly Dictionary<string, Func<Faker, object>> _propertyConfigurations = new();
-        private readonly IServiceProvider _serviceProvider;  // Inject IServiceProvider
-
-        public MockConfigurationBuilder(IServiceProvider serviceProvider)
-        {
-            _serviceProvider = serviceProvider;
-        }
 
         public MockConfigurationBuilder<T> ForProperty(string propertyName, Func<Faker, object> generator)
         {
@@ -24,8 +19,7 @@ namespace ApiDocAndMock.Infrastructure.Configurations
         {
             _propertyConfigurations[propertyName] = faker =>
             {
-                // Resolve IApiMockDataFactory lazily
-                var mockDataFactory = _serviceProvider.GetRequiredService<IApiMockDataFactory>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
                 return mockDataFactory.CreateMockObject<TNested>();
             };
             return this;
@@ -35,7 +29,7 @@ namespace ApiDocAndMock.Infrastructure.Configurations
         {
             _propertyConfigurations[propertyName] = faker =>
             {
-                var mockDataFactory = _serviceProvider.GetRequiredService<IApiMockDataFactory>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
                 return mockDataFactory.CreateMockObjects<TNested>(count);
             };
             return this;

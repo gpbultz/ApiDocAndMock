@@ -41,6 +41,49 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             });
         }
 
+        public static RouteHandlerBuilder WithAuthorizationRoles(this RouteHandlerBuilder builder, params string[] roles)
+        {
+            if (roles.Length == 0)
+            {
+                return builder;  // No roles specified, skip adding header or authorization
+            }
+
+            var roleDescription = string.Join(", ", roles);
+
+            // Automatically apply authorization based on roles
+            builder.RequireAuthorization(policy =>
+            {
+                policy.RequireRole(roles);  // Require specified roles
+            });
+
+            // Document in Swagger
+            return builder.WithOpenApi(operation =>
+            {
+                operation.Parameters ??= new List<OpenApiParameter>();
+
+                if (!operation.Parameters.Any(p =>
+                        p.In == ParameterLocation.Header &&
+                        p.Name.Equals("X-Roles", StringComparison.OrdinalIgnoreCase)))
+                {
+                    operation.Parameters.Add(new OpenApiParameter
+                    {
+                        Name = "X-Roles",
+                        In = ParameterLocation.Header,
+                        Required = true,
+                        Description = $"Roles required: {roleDescription}",
+                        Schema = new OpenApiSchema
+                        {
+                            Type = "string"
+                        }
+                    });
+                }
+
+                return operation;
+            });
+        }
+
+
+
         /// <summary>
         /// Documents any querystring parameters that are required
         /// </summary>
@@ -249,13 +292,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.WithOpenApi(operation =>
             {
-                var serviceProvider = ServiceProviderHelper.ResolveServiceProvider();
-
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IMockConfigurationsFactory>();
-
-                // Use ServiceProviderHelper instead of ServiceResolver
-                var responseConfigurations = ServiceProviderHelper.GetService<CommonResponseConfigurations>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IMockConfigurationsFactory>();
+                var responseConfigurations = ServiceProviderHelper.GetService<ICommonResponseConfigurations>();
 
                 foreach (var statusCode in statusCodes)
                 {

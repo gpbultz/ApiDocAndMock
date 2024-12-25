@@ -15,16 +15,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             services.AddHttpContextAccessor();
 
             services.AddSingleton<IApiMockDataFactory, ApiMockDataFactory>();
-
-            // Pass IServiceProvider to MockConfigurationsFactory
-            services.AddSingleton<IMockConfigurationsFactory>(provider =>
-            {
-                return new MockConfigurationsFactory(provider);
-            });
-
-            services.AddSingleton<CommonResponseConfigurations>();
-            services.AddSingleton<ICommonResponseConfigurations>(provider =>
-                provider.GetRequiredService<CommonResponseConfigurations>());
+            services.AddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
+            services.AddSingleton<ICommonResponseConfigurations, CommonResponseConfigurations>();
 
             return services;
         }

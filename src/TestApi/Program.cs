@@ -9,7 +9,14 @@ using TestApi.Infrastructure.API.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDocAndMock();
-builder.Services.AddMockAuthentication();
+
+builder.Services.AddMockAuthentication(roles =>
+{
+    roles.Add("Admin");
+    roles.Add("Manager");
+    roles.Add("Guest");
+});
+
 builder.Services.AddMockSwagger(includeSecurity: true, includAnnotations: true);
 builder.Services.AddMemoryDb();
 

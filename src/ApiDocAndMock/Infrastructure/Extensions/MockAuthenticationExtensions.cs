@@ -1,6 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using ApiDocAndMock.Application.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -12,46 +15,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <summary>
         /// Adds authentication with predefined JwtBearer options
         /// </summary>
-        public static IServiceCollection AddMockAuthentication(this IServiceCollection services)
+        public static IServiceCollection AddMockAuthentication(this IServiceCollection services, Action<List<string>>? roles = null, Action<JwtBearerOptions>? configureJwt = null)
         {
-            services.AddAuthentication("Bearer")
-                .AddJwtBearer("Bearer", options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = false, // Skip issuer validation
-                        ValidateAudience = false, // Skip audience validation
-                        ValidateLifetime = false, // Skip token expiration validation
-                        ValidateIssuerSigningKey = false, // Skip signing key validation
-                    };
-
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnTokenValidated = context =>
-                        {
-                            Console.WriteLine("Token validated successfully.");
-                            return Task.CompletedTask;
-                        },
-                        OnAuthenticationFailed = context =>
-                        {
-                            Console.WriteLine("Token validation failed: " + context.Exception.Message);
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
-
-            services.AddAuthorization();
-
-            return services;
-        }
-
-        /// <summary>
-        /// Adds authentication with configured JwtBearerOptions
-        /// </summary>
-        /// <param name="configure">Options to apply</param>
-        /// <returns></returns>
-        public static IServiceCollection AddMockAuthentication(this IServiceCollection services, Action<JwtBearerOptions>? configure = null)
-        {
+            // Set up basic Bearer authentication
             services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
@@ -63,13 +29,29 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                         ValidateIssuerSigningKey = false,
                     };
 
-                    configure?.Invoke(options);
+                    configureJwt?.Invoke(options);
                 });
 
-            services.AddAuthorization();
+            // Configure Authorization and add roles if provided
+            services.AddAuthorization(options =>
+            {
+                var roleList = new List<string>();
+
+                // Invoke action to populate roles dynamically
+                roles?.Invoke(roleList);
+
+                foreach (var role in roleList)
+                {
+                    options.AddPolicy($"{role}Only", policy =>
+                    {
+                        policy.RequireRole(role);
+                    });
+                }
+            });
 
             return services;
         }
+
 
     }
 }

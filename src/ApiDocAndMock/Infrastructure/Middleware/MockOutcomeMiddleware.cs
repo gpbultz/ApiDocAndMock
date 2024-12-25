@@ -1,4 +1,4 @@
-﻿using ApiDocAndMock.Infrastructure.Configurations;
+﻿using ApiDocAndMock.Application.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
@@ -26,7 +26,7 @@ namespace ApiDocAndMock.Infrastructure.Middleware
                 int.TryParse(outcomeValue, out var statusCode))
             {
                 // Retrieve CommonResponseConfigurations from the DI container
-                var responseConfigurations = _serviceProvider.GetRequiredService<CommonResponseConfigurations>();
+                var responseConfigurations = _serviceProvider.GetRequiredService<ICommonResponseConfigurations>();
 
                 // Map the status code to a predefined response
                 var problemDetails = responseConfigurations.GetProblemDetailsForStatusCode(statusCode);
