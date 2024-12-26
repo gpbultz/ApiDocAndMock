@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDocAndMock();
 
-builder.Services.AddMockAuthentication(authMode: ApiDocAndMock.Shared.Enums.AuthMode.XRolesHeader);
+builder.Services.AddMockAuthentication(authMode: ApiDocAndMock.Shared.Enums.AuthMode.JWTToken);
 
 builder.Services.AddMockSwagger(includeSecurity: true, includAnnotations: true);
 builder.Services.AddMemoryDb();

@@ -29,33 +29,29 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 options.Mode = authMode;
             });
 
+            var tokenValidationParams = authMode == AuthMode.JWTToken
+                 ? new TokenValidationParameters
+                 {
+                     ValidateIssuer = true,
+                     ValidIssuer = "mock-api",
+                     ValidateAudience = true,
+                     ValidAudience = "mock-clients",
+                     ValidateLifetime = true,
+                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verylongsupersecurekey12345678forHmacSha256")),
+                     ValidateIssuerSigningKey = true
+                 }
+                 : new TokenValidationParameters
+                 {
+                     ValidateIssuer = false,
+                     ValidateAudience = false,
+                     ValidateLifetime = false,
+                     ValidateIssuerSigningKey = false
+                 };
+
             services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
-                    if (authMode == AuthMode.JWTToken)
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = true,
-                            ValidIssuer = "mock-api",
-                            ValidateAudience = true,
-                            ValidAudience = "mock-clients",
-                            ValidateLifetime = true,
-                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verylongsupersecurekey12345678forHmacSha256")),
-                            ValidateIssuerSigningKey = true
-                        };
-
-                    }
-                    else
-                    {
-                        options.TokenValidationParameters = new TokenValidationParameters
-                        {
-                            ValidateIssuer = false,
-                            ValidateAudience = false,
-                            ValidateLifetime = false,
-                            ValidateIssuerSigningKey = false,
-                        };
-                    }
+                    options.TokenValidationParameters = tokenValidationParams;
                     configureJwt?.Invoke(options);
                 });
 

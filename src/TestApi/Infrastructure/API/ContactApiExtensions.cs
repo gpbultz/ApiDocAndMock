@@ -31,7 +31,7 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithEnrichedMockedResponse<GetContactsResponse>(includePages: true)       // Document response
             .WithSummary("Retrieve all contacts", "Returns a paginated list of contacts with optional filtering by city.")
             .RequireBearerToken()
-            //.WithAuthorizationRoles("AdminOnly", "ManagerOnly")
+            .WithAuthorizationRoles("AdminOnly", "ManagerOnly")
             .WithCommonResponses("401", "403", "429", "500")
             .WithRequiredQueryParameter("City", "City is required for filtering contacts.")
             .WithMockOutcome();
