@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -22,14 +23,16 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             services.AddSingleton<IMemoryDb>(sp =>
             {
                 var env = sp.GetRequiredService<IWebHostEnvironment>();
-                
+                var logger = sp.GetRequiredService<ILogger<NoOpMemoryDb>>();
+
                 if (env.IsProduction())
                 {
-                    return null;
+                    return new NoOpMemoryDb(logger);
                 }
 
-                return new MemoryDb(); 
+                return new MemoryDb();
             });
+
             return services;
         }
 
