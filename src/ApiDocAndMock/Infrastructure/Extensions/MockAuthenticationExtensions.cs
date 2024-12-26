@@ -3,7 +3,9 @@ using ApiDocAndMock.Infrastructure.Authorization;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.Text;
@@ -18,8 +20,16 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <summary>
         /// Adds authentication with predefined JwtBearer options
         /// </summary>
-        public static IServiceCollection AddMockAuthentication(this IServiceCollection services,AuthMode authMode = AuthMode.BearerOnly, Action<JwtBearerOptions>? configureJwt = null)
+        public static IServiceCollection AddMockAuthentication(this IServiceCollection services, AuthMode authMode = AuthMode.BearerOnly, Action<JwtBearerOptions>? configureJwt = null)
         {
+            var serviceProvider = services.BuildServiceProvider();
+            var env = serviceProvider.GetRequiredService<IWebHostEnvironment>();
+
+            if (env.IsProduction())
+            {
+                return services; 
+            }
+
             // Store the mode in DI for later access
             var settings = new AuthSettings();
             settings.Mode = authMode;

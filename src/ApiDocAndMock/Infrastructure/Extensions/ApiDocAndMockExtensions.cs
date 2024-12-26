@@ -3,7 +3,10 @@ using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -31,16 +34,24 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             // Set up the global service provider resolver
             ServiceProviderHelper.Initialize(app.ApplicationServices);
 
-            if (useAuthentication)
-            {
-                // Add authentication mocking middleware
-                app.UseMockAuthentication();
-            }
+            var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 
-            if (useMockOutcome)
+            if (!env.EnvironmentName.Equals(Environments.Production, StringComparison.OrdinalIgnoreCase))
             {
-                // Add the middleware for mock outcomes (e.g., simulate HTTP status codes)
-                app.UseMockOutcome();
+                if (useAuthentication)
+                {
+                    app.UseMockAuthentication();
+                }
+
+                if (useMockOutcome)
+                {
+                    app.UseMockOutcome();
+                }
+            }
+            else
+            {
+                var logger = app.ApplicationServices.GetRequiredService<ILogger<IApplicationBuilder>>();
+                logger.LogInformation("Skipping ApiDocAndMock middleware in Production environment.");
             }
 
             return app;

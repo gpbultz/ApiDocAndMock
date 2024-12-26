@@ -2,8 +2,10 @@
 using ApiDocAndMock.Infrastructure.Data;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -17,7 +19,17 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// </summary>
         public static IServiceCollection AddMemoryDb(this IServiceCollection services)
         {
-            services.AddSingleton<IMemoryDb>(new MemoryDb());
+            services.AddSingleton<IMemoryDb>(sp =>
+            {
+                var env = sp.GetRequiredService<IWebHostEnvironment>();
+                
+                if (env.IsProduction())
+                {
+                    return null;
+                }
+
+                return new MemoryDb(); 
+            });
             return services;
         }
 
