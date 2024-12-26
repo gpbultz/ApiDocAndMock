@@ -96,7 +96,7 @@ namespace ApiDocAndMock.Infrastructure.Data
             {
                 if (!Guid.TryParse(stringValue, out var guidValue))
                 {
-                    return false; 
+                    return false;
                 }
                 convertedValue = guidValue;
             }

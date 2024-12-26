@@ -1,16 +1,18 @@
 
 using ApiDocAndMock.Infrastructure.Extensions;
-using ApiDocAndMock.Infrastructure.Mocking;
 using Microsoft.AspNetCore.Mvc;
-using TestApi.Infrastructure.API.Extensions;
 using TestApi.Application.Queries.Contacts;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
+using TestApi.Infrastructure.API;
+using TestApi.Infrastructure.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDocAndMock();
-builder.Services.AddMockAuthentication();
+
+builder.Services.AddMockAuthentication(authMode: ApiDocAndMock.Shared.Enums.AuthMode.JWTToken);
+
 builder.Services.AddMockSwagger(includeSecurity: true, includAnnotations: true);
 builder.Services.AddMemoryDb();
 
@@ -71,6 +73,7 @@ builder.Services.AddMockingConfigurations(config =>
     config.RegisterConfiguration<GetHotelByIdResponse>(cfg =>
     {
         cfg
+            .ForProperty("Name", faker => faker.Company.CompanyName())
             .ForPropertyObjectList<Room>("Rooms", 5)
             .ForPropertyObjectList<Booking>("Bookings", 5);
     });
@@ -86,6 +89,7 @@ app.UseHttpsRedirection();
 app.MapContactEndpoints();
 app.MapHotelEndpoints();
 app.MapBookingEndpoints();
+app.MapJwtTokenEndpoints();
 
 app.UseSwagger();
 app.UseSwaggerUI();

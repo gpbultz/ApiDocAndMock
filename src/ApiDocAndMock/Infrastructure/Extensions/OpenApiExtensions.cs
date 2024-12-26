@@ -1,12 +1,15 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Authorization;
 using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Utilities;
+using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -41,6 +44,59 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 return operation;
             });
         }
+
+        public static RouteHandlerBuilder WithAuthorizationRoles(this RouteHandlerBuilder builder, params string[] roles)
+        {
+            var settings = ServiceProviderHelper.GetService<IOptions<AuthSettings>>().Value;
+
+            if (roles.Length == 0)
+            {
+                return builder;
+            }
+
+            if (settings.Mode == AuthMode.JWTToken)
+            {
+                builder.RequireAuthorization(policy =>
+                {
+                    policy.RequireRole(roles);
+                });
+            }
+            else if (settings.Mode == AuthMode.XRolesHeader)
+            {
+                builder.RequireAuthorization(policy =>
+                {
+                    policy.RequireAssertion(context =>
+                    {
+                        var userRoles = context.User.Claims
+                                        .Where(c => c.Type == ClaimTypes.Role)
+                                        .Select(c => c.Value);
+                        return roles.Any(role => userRoles.Contains(role));
+                    });
+                });
+            }
+
+            return builder.WithOpenApi(operation =>
+            {
+                operation.Parameters ??= new List<OpenApiParameter>();
+
+                if (settings.Mode == AuthMode.XRolesHeader &&
+                    !operation.Parameters.Any(p => p.Name.Equals("X-Roles", StringComparison.OrdinalIgnoreCase)))
+                {
+                    operation.Parameters.Add(new OpenApiParameter
+                    {
+                        Name = "X-Roles",
+                        In = ParameterLocation.Header,
+                        Required = true,
+                        Description = $"Roles required: {string.Join(", ", roles)}",
+                        Schema = new OpenApiSchema { Type = "string" }
+                    });
+                }
+
+                return operation;
+            });
+        }
+
+
 
         /// <summary>
         /// Documents any querystring parameters that are required
@@ -248,24 +304,11 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <returns></returns>
         public static RouteHandlerBuilder WithCommonResponses(this RouteHandlerBuilder builder, params string[] statusCodes)
         {
-            
-
             return builder.WithOpenApi(operation =>
             {
-                var httpContextAccessor = ResolveHttpContextAccessor();
+                var mockDataFactory = ServiceProviderHelper.GetService<IMockConfigurationsFactory>();
+                var responseConfigurations = ServiceProviderHelper.GetService<ICommonResponseConfigurations>();
 
-                var serviceProvider = httpContextAccessor?.HttpContext?.RequestServices
-                                      ?? ServiceProviderHolder.ServiceProvider;
-
-                if (serviceProvider == null)
-                {
-                    throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
-                }
-
-                // Resolve IApiMockDataFactory from DI
-                var mockDataFactory = serviceProvider.GetRequiredService<IMockConfigurationsFactory>();
-
-                var responseConfigurations = ServiceResolver.GetService<CommonResponseConfigurations>();
                 foreach (var statusCode in statusCodes)
                 {
                     if (int.TryParse(statusCode, out var parsedStatusCode))
@@ -334,13 +377,6 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 errors = validationErrors
             };
-        }
-
-        private static IHttpContextAccessor? ResolveHttpContextAccessor()
-        {
-            // Static service provider to resolve IHttpContextAccessor once
-            return ServiceProviderHolder.ServiceProvider
-                ?.GetService<IHttpContextAccessor>();
         }
     }
 }

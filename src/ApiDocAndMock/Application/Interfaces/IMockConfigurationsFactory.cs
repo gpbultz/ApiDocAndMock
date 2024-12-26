@@ -1,10 +1,5 @@
 ﻿using ApiDocAndMock.Infrastructure.Configurations;
 using Bogus;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Application.Interfaces
 {
@@ -12,5 +7,6 @@ namespace ApiDocAndMock.Application.Interfaces
     {
         void RegisterConfiguration<T>(Action<MockConfigurationBuilder<T>> configure) where T : class;
         Dictionary<string, Func<Faker, object>> TryGetConfigurations<T>() where T : class;
+        void AddDefaultFakerRule(string property, Func<Faker, object> generator);
     }
 }

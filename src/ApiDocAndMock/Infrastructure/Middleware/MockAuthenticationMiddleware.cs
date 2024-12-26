@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ApiDocAndMock.Infrastructure.Authorization;
+using ApiDocAndMock.Shared.Enums;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using System.Security.Claims;
 
 namespace ApiDocAndMock.Infrastructure.Middleware
@@ -9,10 +12,11 @@ namespace ApiDocAndMock.Infrastructure.Middleware
     public class MockAuthenticationMiddleware
     {
         private readonly RequestDelegate _next;
-
-        public MockAuthenticationMiddleware(RequestDelegate next)
+        private readonly AuthMode _mode;
+        public MockAuthenticationMiddleware(RequestDelegate next, IOptions<AuthSettings> settings)
         {
             _next = next;
+            _mode = settings.Value.Mode;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -21,26 +25,85 @@ namespace ApiDocAndMock.Infrastructure.Middleware
             {
                 var token = authHeader.FirstOrDefault()?.Replace("Bearer ", string.Empty);
 
-                if (string.Equals(token, "mock-token", StringComparison.OrdinalIgnoreCase))
+                switch (_mode)
                 {
-                    var claims = new[]
-                    {
-                        new Claim(ClaimTypes.Name, "Mock User"),
-                        new Claim(ClaimTypes.Role, "User"),
-                    };
+                    case AuthMode.BearerOnly:
+                        if (string.Equals(token, "mock-token", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.User = CreateMockUser();
+                        }
+                        else
+                        {
+                            RejectRequest(context);
+                            return;
+                        }
+                        break;
 
-                    var identity = new ClaimsIdentity(claims, "Mock");
-                    context.User = new ClaimsPrincipal(identity);
+                    case AuthMode.XRolesHeader:
+                        if (string.Equals(token, "mock-token", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.User = CreateMockUserWithRoles(context);
+                        }
+                        else
+                        {
+                            RejectRequest(context);
+                            return;
+                        }
+                        break;
+
+                    case AuthMode.JWTToken:
+                        if (context.User.Identity?.IsAuthenticated != true)
+                        {
+                            RejectRequest(context);
+                            return;
+                        }
+                        break;
                 }
-                else
-                {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    context.Response.Headers.Add("WWW-Authenticate", @"Bearer error=""invalid_token""");
-                    return;
-                }
+            }
+            else if (_mode != AuthMode.JWTToken)
+            {
+                RejectRequest(context);
+                return;
             }
 
             await _next(context);
+        }
+
+        private ClaimsPrincipal CreateMockUser()
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, "Mock User")
+            };
+            var identity = new ClaimsIdentity(claims, "Mock");
+            return new ClaimsPrincipal(identity);
+        }
+
+        private ClaimsPrincipal CreateMockUserWithRoles(HttpContext context)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, "Mock User")
+            };
+
+            if (context.Request.Headers.TryGetValue("X-Roles", out var rolesHeader))
+            {
+                var roles = rolesHeader.ToString().Split(',');
+
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role.Trim()));
+                }
+            }
+
+            var identity = new ClaimsIdentity(claims, "Mock");
+            return new ClaimsPrincipal(identity);
+        }
+
+        private void RejectRequest(HttpContext context)
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.Headers.Add("WWW-Authenticate", @"Bearer error=""invalid_token""");
         }
     }
 }

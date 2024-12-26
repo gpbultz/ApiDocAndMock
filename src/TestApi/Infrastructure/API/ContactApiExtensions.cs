@@ -1,7 +1,5 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
-using ApiDocAndMock.Infrastructure.Mocking;
-using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Commands.Contacts;
 using TestApi.Application.Queries.Contacts;
@@ -25,7 +23,7 @@ namespace TestApi.Infrastructure.API.Extensions
                                         pageSize: query.PageSize ?? 10,
                                         currentPage: query.Page ?? 1,
                                         resourcePath: "/contacts"
-                                    ); 
+                                    );
 
                 return Results.Ok(response);
             })
@@ -33,6 +31,7 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithEnrichedMockedResponse<GetContactsResponse>(includePages: true)       // Document response
             .WithSummary("Retrieve all contacts", "Returns a paginated list of contacts with optional filtering by city.")
             .RequireBearerToken()
+            .WithAuthorizationRoles("AdminOnly", "ManagerOnly")
             .WithCommonResponses("401", "403", "429", "500")
             .WithRequiredQueryParameter("City", "City is required for filtering contacts.")
             .WithMockOutcome();
@@ -56,7 +55,7 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithMockRequest<UpdateContactCommand>()
             .WithStaticResponse("201", new UpdateContactResponse { Result = "updated" })
             .WithPathParameter(name: "id", description: "The unique identifier of the contact to update.")
-            .UpdateMockWithMemoryDb<UpdateContactCommand, GetContactByIdResponse, UpdateContactResponse>(responseMapper: obj => new UpdateContactResponse { Result = "success"})
+            .UpdateMockWithMemoryDb<UpdateContactCommand, GetContactByIdResponse, UpdateContactResponse>(responseMapper: obj => new UpdateContactResponse { Result = "success" })
             .RequireBearerToken()
             .Produces<UpdateContactResponse>(200)
             .Produces<UpdateContactResponse>(201)
@@ -72,7 +71,7 @@ namespace TestApi.Infrastructure.API.Extensions
             .WithPathParameter(name: "Id", description: "The unique identifier of the contact to delete.")
             .DeleteMockWithMemoryDb<GetContactByIdResponse, DeleteContactResponse>()
             .RequireBearerToken();
-            
+
 
 
             // Create Contact

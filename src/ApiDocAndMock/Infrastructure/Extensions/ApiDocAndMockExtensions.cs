@@ -3,7 +3,10 @@ using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Mocking;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -15,16 +18,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             services.AddHttpContextAccessor();
 
             services.AddSingleton<IApiMockDataFactory, ApiMockDataFactory>();
-
-            // Pass IServiceProvider to MockConfigurationsFactory
-            services.AddSingleton<IMockConfigurationsFactory>(provider =>
-            {
-                return new MockConfigurationsFactory(provider);
-            });
-
-            services.AddSingleton<CommonResponseConfigurations>();
-            services.AddSingleton<ICommonResponseConfigurations>(provider =>
-                provider.GetRequiredService<CommonResponseConfigurations>());
+            services.AddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
+            services.AddSingleton<ICommonResponseConfigurations, CommonResponseConfigurations>();
 
             return services;
         }
@@ -37,20 +32,26 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         public static IApplicationBuilder UseApiDocAndMock(this IApplicationBuilder app, bool useAuthentication = false, bool useMockOutcome = false)
         {
             // Set up the global service provider resolver
-            ServiceResolver.SetServiceProvider(app.ApplicationServices);
-            ServiceProviderHolder.Initialize(app.ApplicationServices);
-            ApiMockDataFactoryStatic.Initialize(app.ApplicationServices);
+            ServiceProviderHelper.Initialize(app.ApplicationServices);
 
-            if (useAuthentication)
+            var env = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
+
+            if (!env.EnvironmentName.Equals(Environments.Production, StringComparison.OrdinalIgnoreCase))
             {
-                // Add authentication mocking middleware
-                app.UseMockAuthentication();
+                if (useAuthentication)
+                {
+                    app.UseMockAuthentication();
+                }
+
+                if (useMockOutcome)
+                {
+                    app.UseMockOutcome();
+                }
             }
-
-            if (useMockOutcome)
+            else
             {
-                // Add the middleware for mock outcomes (e.g., simulate HTTP status codes)
-                app.UseMockOutcome();
+                var logger = app.ApplicationServices.GetRequiredService<ILogger<IApplicationBuilder>>();
+                logger.LogInformation("Skipping ApiDocAndMock middleware in Production environment.");
             }
 
             return app;

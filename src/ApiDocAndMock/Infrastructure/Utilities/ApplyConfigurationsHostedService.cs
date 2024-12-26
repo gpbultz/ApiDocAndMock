@@ -3,19 +3,14 @@ using ApiDocAndMock.Infrastructure.Configurations;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Utilities
 {
-    public class ApplyMockConfigurationsHostedService : IHostedService
+    public class ApplyConfigurationsHostedService : IHostedService
     {
         private readonly IServiceProvider _provider;
 
-        public ApplyMockConfigurationsHostedService(IServiceProvider provider)
+        public ApplyConfigurationsHostedService(IServiceProvider provider)
         {
             _provider = provider;
         }
@@ -25,9 +20,15 @@ namespace ApiDocAndMock.Infrastructure.Utilities
             using (var scope = _provider.CreateScope())
             {
                 var factory = scope.ServiceProvider.GetRequiredService<IMockConfigurationsFactory>();
-                var options = scope.ServiceProvider.GetRequiredService<IOptions<MockingConfigurationOptions>>().Value;
 
-                options.Configure?.Invoke(factory);
+                // Apply Mocking Configurations
+                var mockingOptions = scope.ServiceProvider.GetRequiredService<IOptions<MockingConfigurationOptions>>().Value;
+                mockingOptions.Configure?.Invoke(factory);
+
+                // Apply Faker Rules
+                var fakerOptions = scope.ServiceProvider.GetRequiredService<IOptions<FakerRuleOptions>>().Value;
+                var rules = factory.TryGetConfigurations<object>();  // Get default faker rules
+                fakerOptions.Configure?.Invoke(rules);
             }
 
             return Task.CompletedTask;
@@ -35,4 +36,5 @@ namespace ApiDocAndMock.Infrastructure.Utilities
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
+
 }
