@@ -1,11 +1,15 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Authorization;
 using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Utilities;
+using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -43,38 +47,48 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
         public static RouteHandlerBuilder WithAuthorizationRoles(this RouteHandlerBuilder builder, params string[] roles)
         {
+            var settings = ServiceProviderHelper.GetService<IOptions<AuthSettings>>().Value;
+
             if (roles.Length == 0)
             {
-                return builder;  // No roles specified, skip adding header or authorization
+                return builder;
             }
 
-            var roleDescription = string.Join(", ", roles);
-
-            // Automatically apply authorization based on roles
-            builder.RequireAuthorization(policy =>
+            if (settings.Mode == AuthMode.JWTToken)
             {
-                policy.RequireRole(roles);  // Require specified roles
-            });
+                builder.RequireAuthorization(policy =>
+                {
+                    policy.RequireRole(roles);
+                });
+            }
+            else if (settings.Mode == AuthMode.XRolesHeader)
+            {
+                builder.RequireAuthorization(policy =>
+                {
+                    policy.RequireAssertion(context =>
+                    {
+                        var userRoles = context.User.Claims
+                                        .Where(c => c.Type == ClaimTypes.Role)
+                                        .Select(c => c.Value);
+                        return roles.Any(role => userRoles.Contains(role));
+                    });
+                });
+            }
 
-            // Document in Swagger
             return builder.WithOpenApi(operation =>
             {
                 operation.Parameters ??= new List<OpenApiParameter>();
 
-                if (!operation.Parameters.Any(p =>
-                        p.In == ParameterLocation.Header &&
-                        p.Name.Equals("X-Roles", StringComparison.OrdinalIgnoreCase)))
+                if (settings.Mode == AuthMode.XRolesHeader &&
+                    !operation.Parameters.Any(p => p.Name.Equals("X-Roles", StringComparison.OrdinalIgnoreCase)))
                 {
                     operation.Parameters.Add(new OpenApiParameter
                     {
                         Name = "X-Roles",
                         In = ParameterLocation.Header,
                         Required = true,
-                        Description = $"Roles required: {roleDescription}",
-                        Schema = new OpenApiSchema
-                        {
-                            Type = "string"
-                        }
+                        Description = $"Roles required: {string.Join(", ", roles)}",
+                        Schema = new OpenApiSchema { Type = "string" }
                     });
                 }
 

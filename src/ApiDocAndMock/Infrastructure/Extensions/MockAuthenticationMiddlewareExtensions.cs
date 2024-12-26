@@ -10,10 +10,20 @@ namespace ApiDocAndMock.Infrastructure.Extensions
     {
         public static IApplicationBuilder UseMockAuthentication(this IApplicationBuilder app)
         {
-            app.UseMiddleware<MockAuthenticationMiddleware>();
+            // Ensure routing is set up
+            app.UseRouting();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+            app.UseWhen(
+                context => !context.Request.Path.StartsWithSegments("/swagger") &&
+                !context.Request.Path.StartsWithSegments("/token"), appBuilder =>
+            {
+                appBuilder.UseMiddleware<MockAuthenticationMiddleware>();
+
+                appBuilder.UseAuthentication();
+                appBuilder.UseAuthorization();
+            });
+
+
 
             return app;
         }

@@ -1,9 +1,12 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
+using ApiDocAndMock.Infrastructure.Authorization;
+using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Text;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -15,39 +18,48 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// <summary>
         /// Adds authentication with predefined JwtBearer options
         /// </summary>
-        public static IServiceCollection AddMockAuthentication(this IServiceCollection services, Action<List<string>>? roles = null, Action<JwtBearerOptions>? configureJwt = null)
+        public static IServiceCollection AddMockAuthentication(this IServiceCollection services,AuthMode authMode = AuthMode.BearerOnly, Action<JwtBearerOptions>? configureJwt = null)
         {
-            // Set up basic Bearer authentication
+            // Store the mode in DI for later access
+            var settings = new AuthSettings();
+            settings.Mode = authMode;
+
+            services.Configure<AuthSettings>(options =>
+            {
+                options.Mode = authMode;
+            });
+
             services.AddAuthentication("Bearer")
                 .AddJwtBearer("Bearer", options =>
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    if (authMode == AuthMode.JWTToken)
                     {
-                        ValidateIssuer = false,
-                        ValidateAudience = false,
-                        ValidateLifetime = false,
-                        ValidateIssuerSigningKey = false,
-                    };
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = true,
+                            ValidIssuer = "mock-api",
+                            ValidateAudience = true,
+                            ValidAudience = "mock-clients",
+                            ValidateLifetime = true,
+                            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("verylongsupersecurekey12345678forHmacSha256")),
+                            ValidateIssuerSigningKey = true
+                        };
 
+                    }
+                    else
+                    {
+                        options.TokenValidationParameters = new TokenValidationParameters
+                        {
+                            ValidateIssuer = false,
+                            ValidateAudience = false,
+                            ValidateLifetime = false,
+                            ValidateIssuerSigningKey = false,
+                        };
+                    }
                     configureJwt?.Invoke(options);
                 });
 
-            // Configure Authorization and add roles if provided
-            services.AddAuthorization(options =>
-            {
-                var roleList = new List<string>();
-
-                // Invoke action to populate roles dynamically
-                roles?.Invoke(roleList);
-
-                foreach (var role in roleList)
-                {
-                    options.AddPolicy($"{role}Only", policy =>
-                    {
-                        policy.RequireRole(role);
-                    });
-                }
-            });
+            services.AddAuthorization();
 
             return services;
         }

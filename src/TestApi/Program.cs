@@ -4,18 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 using TestApi.Application.Queries.Contacts;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
+using TestApi.Infrastructure.API;
 using TestApi.Infrastructure.API.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDocAndMock();
 
-builder.Services.AddMockAuthentication(roles =>
-{
-    roles.Add("Admin");
-    roles.Add("Manager");
-    roles.Add("Guest");
-});
+builder.Services.AddMockAuthentication(authMode: ApiDocAndMock.Shared.Enums.AuthMode.XRolesHeader);
 
 builder.Services.AddMockSwagger(includeSecurity: true, includAnnotations: true);
 builder.Services.AddMemoryDb();
@@ -93,6 +89,7 @@ app.UseHttpsRedirection();
 app.MapContactEndpoints();
 app.MapHotelEndpoints();
 app.MapBookingEndpoints();
+app.MapJwtTokenEndpoints();
 
 app.UseSwagger();
 app.UseSwaggerUI();
