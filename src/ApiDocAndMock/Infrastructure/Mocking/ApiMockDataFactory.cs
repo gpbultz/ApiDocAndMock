@@ -187,6 +187,15 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 return dictionary;
             }
 
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Tuple<,>))
+            {
+                var genericArguments = type.GetGenericArguments();
+                var item1 = GenerateDefaultValueDynamically(name, genericArguments[0], faker, configurations, nestedCount - 1);
+                var item2 = GenerateDefaultValueDynamically(name, genericArguments[1], faker, configurations, nestedCount - 1);
+
+                return Activator.CreateInstance(type, item1, item2);
+            }
+
             // Handle complex objects
             if (type.IsClass && type != typeof(string))
             {
