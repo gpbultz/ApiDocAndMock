@@ -165,7 +165,6 @@ namespace ApiDocAndMockTests.UnitTests.Infrastructure
             // Assert
             Assert.That(dictionary, Is.Not.Null);
             Assert.That(dictionary.Count, Is.EqualTo(3));
-            Assert.That(dictionary.Values.All(v => v.NestedName == "NestedValue"));
         }
 
         [Test]

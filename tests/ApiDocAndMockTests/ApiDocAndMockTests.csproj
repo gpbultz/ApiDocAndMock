@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ApiDocAndMock\ApiDocAndMock.csproj" />
+    <ProjectReference Include="..\..\src\ApiDocAndMock\ApiDocAndMock.csproj" />
   </ItemGroup>
 
 </Project>
