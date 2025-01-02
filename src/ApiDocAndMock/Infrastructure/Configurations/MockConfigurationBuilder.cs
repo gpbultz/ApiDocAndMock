@@ -46,7 +46,8 @@ namespace ApiDocAndMock.Infrastructure.Configurations
             return this;
         }
 
-        public MockConfigurationBuilder<T> ForPropertyDictionary<TKey, TValue>(string propertyName, int count, Func<Faker, TKey> keyRule, Func<Faker, TValue> valueRule)
+        public MockConfigurationBuilder<T> ForPropertyDictionary<TKey, TValue>(string propertyName, int count, Func<Faker, TKey> keyRule, Func<Faker, TValue> valueRule, bool isPrimitive = false)
+            where TKey : notnull
         {
             _propertyConfigurations[propertyName] = faker =>
             {
@@ -55,6 +56,38 @@ namespace ApiDocAndMock.Infrastructure.Configurations
                 for (int i = 0; i < count; i++)
                 {
                     dict[keyRule(faker)] = valueRule(faker);
+                }
+
+                return dict;
+            };
+
+            return this;
+        }
+
+        public MockConfigurationBuilder<T> ForPropertyDictionary<TKey, TValue>(string propertyName, int count, Func<Faker, TKey> keyRule, Func<Faker, TValue>? valueRule = null)
+            where TKey : notnull
+            where TValue : class, new()
+        {
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                var dict = new Dictionary<TKey, TValue>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
+
+                for (int i = 0; i < count; i++)
+                {
+                    var key = keyRule(faker);
+                    TValue value;
+
+                    if (valueRule != null)
+                    {
+                        value = valueRule(faker);
+                    }
+                    else
+                    {
+                        value = mockDataFactory.CreateMockObject<TValue>();
+                    }
+
+                    dict[key] = value;
                 }
 
                 return dict;

@@ -41,6 +41,13 @@ builder.Services.AddDefaultFakerRules(rules =>
 
 builder.Services.AddMockingConfigurations(config =>
 {
+    config.RegisterConfiguration<Appointment>(cfg =>
+    {
+        cfg
+            .ForProperty("DateOfAppointment", faker => faker.Date.Random)
+            .ForProperty("Description", faker => "Meeting with regards to " + faker.Commerce.Department());
+    });
+
     // Booking configuration
     config.RegisterConfiguration<Booking>(cfg =>
     {
@@ -49,11 +56,17 @@ builder.Services.AddMockingConfigurations(config =>
             .ForPropertyObject<Contact>("PrimaryContact");
     });
 
+    config.RegisterConfiguration<GetContactByIdResponse>(cfg =>
+    {
+        cfg.ForPropertyDictionary<Guid, Appointment>("Appointments", 3, faker => Guid.NewGuid());
+    });
+
     // Hotel configuration
     config.RegisterConfiguration<Hotel>(cfg =>
     {
         cfg
             .ForProperty("Name", faker => faker.Company.CompanyName())
+            .ForPropertyTuple("Coordinates", faker => faker.Address.Latitude(), faker=> faker.Address.Longitude())
             .ForPropertyObjectList<Room>("Rooms", 5)
             .ForPropertyObjectList<Booking>("Bookings", 5);
     });
@@ -62,6 +75,7 @@ builder.Services.AddMockingConfigurations(config =>
     {
         cfg
             .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5);
+            
     });
 
     config.RegisterConfiguration<GetHotelsResponse>(cfg =>
@@ -74,8 +88,10 @@ builder.Services.AddMockingConfigurations(config =>
     {
         cfg
             .ForProperty("Name", faker => faker.Company.CompanyName())
+            .ForPropertyTuple("Coordinates", faker => faker.Address.Latitude(), faker => faker.Address.Longitude())
             .ForPropertyObjectList<Room>("Rooms", 5)
-            .ForPropertyObjectList<Booking>("Bookings", 5);
+            .ForPropertyObjectList<Booking>("Bookings", 5)
+            .ForPropertyDictionary("Metadata", 3, faker => Guid.NewGuid(), faker => faker.Commerce.Product(), isPrimitive: true);
     });
 
 });

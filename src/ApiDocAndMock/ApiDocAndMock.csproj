@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>ApiDocAndMock</PackageId>
-	  <Version>1.1.1</Version>
+	  <Version>1.2.0</Version>
 	  <Authors>gpbultz</Authors>
 	  <Company></Company>
 	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
@@ -21,11 +21,10 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.1.1</Version>
+		<Version>1.2.0</Version>
 		<PackageReleaseNotes>
-			- Role-based auth
-			- JWT support 
-			- DI refactor
+			- Complex Types
+			- Full Unit test coverage and refactoring
 		</PackageReleaseNotes>
 	</PropertyGroup>
 

@@ -49,7 +49,7 @@ namespace ApiDocAndMockTests.UnitTests.Infrastructure
             mockServiceProvider.Setup(x => x.GetService(typeof(IApiMockDataFactory)))
                                .Returns(mockDataFactory.Object);
 
-            ServiceProviderHelper.SetServiceProvider(mockServiceProvider.Object);  // Fixed error
+            ServiceProviderHelper.SetServiceProvider(mockServiceProvider.Object);
 
             var nestedBuilder = new MockConfigurationBuilder<NestedModel>()
                 .ForProperty("NestedName", f => "NestedGeneratedName");
@@ -90,7 +90,7 @@ namespace ApiDocAndMockTests.UnitTests.Infrastructure
             mockServiceProvider.Setup(x => x.GetService(typeof(IApiMockDataFactory)))
                                .Returns(mockDataFactory.Object);
 
-            ServiceProviderHelper.SetServiceProvider(mockServiceProvider.Object);  // Ensure the provider is set
+            ServiceProviderHelper.SetServiceProvider(mockServiceProvider.Object);
 
             _builder.ForPropertyObjectList<NestedModel>("NestedList", 3);
 
@@ -126,22 +126,62 @@ namespace ApiDocAndMockTests.UnitTests.Infrastructure
         }
 
         [Test]
-        public void ForPropertyDictionary_ShouldGenerateDictionaryWithSpecifiedRules()
+        public void ForPropertyDictionary_ShouldCreateNestedObjectsInDictionary()
         {
             // Arrange
-            _builder.ForPropertyDictionary(
-                "Mappings",
+            var mockServiceProvider = new Mock<IServiceProvider>();
+            var mockDataFactory = new Mock<IApiMockDataFactory>();
+            var mockConfigurationsFactory = new Mock<IMockConfigurationsFactory>();
+
+            mockDataFactory.Setup(x => x.CreateMockObject<NestedModel>(1))
+                           .Returns(new NestedModel { NestedName = "NestedValue" });
+
+      
+            mockConfigurationsFactory.Setup(x => x.TryGetConfigurations<NestedModel>())
+                                .Returns(new Dictionary<string, Func<Faker, object>>
+                                {
+                                    { "NestedName", f => "NestedValue" }
+                                });
+
+            mockServiceProvider.Setup(x => x.GetService(typeof(IApiMockDataFactory)))
+                       .Returns(mockDataFactory.Object);
+
+            mockServiceProvider.Setup(x => x.GetService(typeof(IMockConfigurationsFactory)))
+                               .Returns(mockConfigurationsFactory.Object);
+
+
+            ServiceProviderHelper.SetServiceProvider(mockServiceProvider.Object);
+
+            _builder.ForPropertyDictionary<Guid, NestedModel>(
+                "NestedMappings",
                 3,
-                f => f.Random.Word(),
-                f => f.Random.Int(1, 100));
+                f => f.Random.Guid()
+            );
 
             // Act
             var configurations = _builder.Build();
-            var dictionary = configurations["Mappings"](_faker) as Dictionary<string, int>;
+            var dictionary = configurations["NestedMappings"](_faker) as Dictionary<Guid, NestedModel>;
 
             // Assert
             Assert.That(dictionary, Is.Not.Null);
             Assert.That(dictionary.Count, Is.EqualTo(3));
+            Assert.That(dictionary.Values.All(v => v.NestedName == "NestedValue"));
+        }
+
+        [Test]
+        public void ForPropertyDictionary_ShouldCreateDictionaryWithStringValues_WhenIsPrimitiveIsTrue()
+        {
+            // Arrange
+            _builder.ForPropertyDictionary("StringMappings", 3, f => f.Random.Guid(), f => f.Lorem.Word(), isPrimitive: true);
+
+            // Act
+            var configurations = _builder.Build();
+            var dictionary = configurations["StringMappings"](_faker) as Dictionary<Guid, string>;
+
+            // Assert
+            Assert.That(dictionary, Is.Not.Null);
+            Assert.That(dictionary.Count, Is.EqualTo(3));
+            Assert.That(dictionary.Values.All(v => !string.IsNullOrEmpty(v)));
         }
 
         // Models for testing

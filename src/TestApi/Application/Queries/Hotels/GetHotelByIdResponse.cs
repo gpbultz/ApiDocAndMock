@@ -14,5 +14,7 @@ namespace TestApi.Application.Queries.Hotels
         public string Country { get; set; }
         public string Phone { get; set; }
         public List<Booking> Bookings { get; set; }
+        public Tuple<double, double> Coordinates { get; set; }
+        public Dictionary<Guid, string> Metadata { get; set; }
     }
 }

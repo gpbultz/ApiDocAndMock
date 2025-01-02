@@ -97,45 +97,29 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 }
             }
         }
-
         private object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
         {
-
             if (configurations.TryGetValue(name, out var fakerRule))
             {
                 return fakerRule(faker);
             }
 
-            // Prevent deep recursion for nested objects
             if (nestedCount <= 0)
             {
                 return null;
             }
 
-            // Handle nullable types
             if (Nullable.GetUnderlyingType(type) != null)
             {
                 type = Nullable.GetUnderlyingType(type);
             }
 
-            // Handle common primitives and built-in types
             if (type == typeof(string)) return faker.Lorem.Word();
             if (type == typeof(Guid)) return Guid.NewGuid();
             if (type == typeof(int)) return faker.Random.Int(0, 100);
             if (type == typeof(long)) return faker.Random.Long(0, 1000);
-            if (type == typeof(short)) return faker.Random.Short(0, 100);
-            if (type == typeof(uint)) return faker.Random.UInt();
-            if (type == typeof(ulong)) return faker.Random.ULong();
-            if (type == typeof(ushort)) return faker.Random.UShort();
-            if (type == typeof(float)) return faker.Random.Float(0.0f, 100.0f);
-            if (type == typeof(double)) return faker.Random.Double(0.0, 100.0);
-            if (type == typeof(decimal)) return faker.Random.Decimal(0.0m, 100.0m);
             if (type == typeof(bool)) return faker.Random.Bool();
-            if (type == typeof(char)) return faker.Random.Char('a', 'z');
-            if (type == typeof(byte)) return faker.Random.Byte();
-            if (type == typeof(sbyte)) return faker.Random.SByte();
             if (type == typeof(DateTime)) return faker.Date.Between(DateTime.Now.AddYears(-1), DateTime.Now);
-            if (type == typeof(TimeSpan)) return faker.Date.Timespan();
 
             // Handle enums
             if (type.IsEnum)
@@ -156,7 +140,38 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 return array;
             }
 
-            // Handle collections (e.g., List<T>, IEnumerable<T>)
+            // Handle dictionaries with complex types
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+            {
+                var keyType = type.GetGenericArguments()[0];
+                var valueType = type.GetGenericArguments()[1];
+                var dictionaryType = typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
+                var dictionary = (IDictionary)Activator.CreateInstance(dictionaryType);
+
+                for (var i = 0; i < faker.Random.Int(1, 5); i++)
+                {
+                    var key = GenerateDefaultValueDynamically(name, keyType, faker, configurations, nestedCount - 1);
+                    var value = GenerateDefaultValueDynamically(name, valueType, faker, configurations, nestedCount - 1);
+
+                    if (key != null && value != null)
+                    {
+                        dictionary.Add(key, value);
+                    }
+                }
+                return dictionary;
+            }
+
+            // Handle tuples
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Tuple<,>))
+            {
+                var genericArguments = type.GetGenericArguments();
+                var item1 = GenerateDefaultValueDynamically(name, genericArguments[0], faker, configurations, nestedCount - 1);
+                var item2 = GenerateDefaultValueDynamically(name, genericArguments[1], faker, configurations, nestedCount - 1);
+
+                return Activator.CreateInstance(type, item1, item2);
+            }
+
+            // Handle lists/collections
             if (typeof(IEnumerable).IsAssignableFrom(type) && type.IsGenericType)
             {
                 var genericType = type.GetGenericArguments()[0];
@@ -169,34 +184,8 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 return list;
             }
 
-            // Handle dictionaries
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
-            {
-                var keyType = type.GetGenericArguments()[0];
-                var valueType = type.GetGenericArguments()[1];
-                var dictionaryType = typeof(Dictionary<,>).MakeGenericType(keyType, valueType);
-                var dictionary = (IDictionary)Activator.CreateInstance(dictionaryType);
 
-                for (var i = 0; i < faker.Random.Int(1, 5); i++)
-                {
-                    var key = GenerateDefaultValueDynamically(name, keyType, faker, configurations, nestedCount - 1);
-                    var value = GenerateDefaultValueDynamically(name, valueType, faker, configurations, nestedCount - 1);
-                    dictionary.Add(key, value);
-                }
-
-                return dictionary;
-            }
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Tuple<,>))
-            {
-                var genericArguments = type.GetGenericArguments();
-                var item1 = GenerateDefaultValueDynamically(name, genericArguments[0], faker, configurations, nestedCount - 1);
-                var item2 = GenerateDefaultValueDynamically(name, genericArguments[1], faker, configurations, nestedCount - 1);
-
-                return Activator.CreateInstance(type, item1, item2);
-            }
-
-            // Handle complex objects
+            // Handle complex objects (Ensure they are not null)
             if (type.IsClass && type != typeof(string))
             {
                 var instance = Activator.CreateInstance(type);
@@ -204,17 +193,16 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 {
                     if (!property.CanWrite || property.GetIndexParameters().Length > 0)
                     {
-                        continue; // Skip read-only or indexed properties
+                        continue;
                     }
-
                     var propertyValue = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, configurations, nestedCount - 1);
                     property.SetValue(instance, propertyValue);
                 }
                 return instance;
             }
 
-            // Fallback: return null for unsupported types
-            return null;
+            // Fallback to empty object instead of null
+            return Activator.CreateInstance(type) ?? null;
         }
     }
 }
