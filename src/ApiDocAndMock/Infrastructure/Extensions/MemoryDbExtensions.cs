@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Data;
+using ApiDocAndMock.Infrastructure.Handlers;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -9,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -20,6 +20,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         /// </summary>
         public static IServiceCollection AddMemoryDb(this IServiceCollection services)
         {
+            services.AddSingleton<IMemoryDbHandler, MemoryDbHandler>();
             services.AddSingleton<IMemoryDb>(sp =>
             {
                 var env = sp.GetRequiredService<IWebHostEnvironment>();
@@ -32,6 +33,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 
                 return new MemoryDb();
             });
+
 
             return services;
         }
@@ -54,41 +56,14 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.AddEndpointFilter(async (context, next) =>
             {
-                var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                var mockFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
+                var mockDataFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
                 var request = context.GetArgument<TRequest>(0);
+                var handler = context.HttpContext.RequestServices.GetRequiredService<IMemoryDbHandler>();
+                var stored = mockDataFactory.CreateMockObject<TStored>();
 
-                var newId = generateId?.Invoke() ?? Guid.NewGuid();
-
-                TStored storedObject = customMapper != null
-                    ? customMapper(request)
-                    : MapRequestToStored(request, mockFactory.CreateMockObject<TStored>());
-
-                var idProperty = typeof(TStored).GetProperty(idFieldName);
-                if (idProperty != null && idProperty.CanWrite)
-                {
-                    idProperty.SetValue(storedObject, newId);
-                }
-
-                db.Add(storedObject);
-
-                var response = new TResponse();
-                var responseIdProperty = typeof(TResponse).GetProperty(idFieldName);
-                if (responseIdProperty != null && responseIdProperty.CanWrite)
-                {
-                    responseIdProperty.SetValue(response, newId);
-                }
-
-                var locationPath = locationPathBuilder != null
-                    ? locationPathBuilder(storedObject)
-                    : $"/{typeof(TStored).Name.ToLower()}s/{newId}";
-
-                if (locationPathBuilder == null)
-                {
-                    return Results.Ok(response);
-                }
-
+                var (response, locationPath) = handler.CreateMockWithMemoryDb<TRequest, TStored, TResponse>(request, stored, customMapper, idFieldName, generateId, locationPathBuilder);
                 return Results.Created(locationPath, response);
+
             });
         }
 
@@ -114,8 +89,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
                 var mockFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-                var request = context.GetArgument<TRequest>(0);
+                var handler = context.HttpContext.RequestServices.GetRequiredService<IMemoryDbHandler>();
 
+                var request = context.GetArgument<TRequest>(0);
                 var id = context.HttpContext.Request.RouteValues[sourceIdFieldName];
 
                 if (id == null)
@@ -134,35 +110,17 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     }
                 }
 
-                var createdPath = string.IsNullOrEmpty(locationPath)
-                    ? context.HttpContext.Request.Path.ToString()
-                    : string.Format(locationPath, id);
+                // Retrieve or create a mock of the existing object
+                var updatedObject = db.GetByField<TStored>(queryIdFieldName, id) ?? mockFactory.CreateMockObject<TStored>() ?? new TStored();
 
-                var methodOutcome = context.HttpContext.Request.Query["methodOutcome"].FirstOrDefault() ?? defaultMethodOutcome;
+                var (response, outcome) = handler.UpdateMockWithMemoryDb(request, id, updatedObject, sourceIdFieldName, queryIdFieldName, customMapper, responseMapper, defaultMethodOutcome, locationPath);
 
-                var existingObject = db.GetByField<TStored>(queryIdFieldName, id) ?? new TStored();
-
-                if (customMapper != null)
-                {
-                    existingObject = customMapper(request);
-                }
-                else
-                {
-                    MapRequestToStored(request, existingObject);
-                }
-
-                db.Update(queryIdFieldName, id, existingObject);
-
-                var response = responseMapper != null
-                    ? responseMapper(existingObject)
-                    : mockFactory.CreateMockObject<TResponse>();
-
-                return methodOutcome switch
+                return outcome switch
                 {
                     "Return200" => Results.Ok(response),
-                    "Return201" => Results.Created(createdPath, response),
+                    "Return201" => Results.Created(locationPath ?? "", response),
                     "Return204" => Results.NoContent(),
-                    _ => throw new InvalidOperationException($"Unsupported method outcome: {methodOutcome}")
+                    _ => throw new InvalidOperationException($"Unsupported method outcome: {outcome}")
                 };
             })
             .WithOpenApi(operation =>
@@ -226,11 +184,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
         {
             return builder.AddEndpointFilter(async (context, next) =>
             {
-                var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
-                var mockFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
+                var handler = context.HttpContext.RequestServices.GetRequiredService<IMemoryDbHandler>();
 
                 var id = context.GetArgument<object>(0);
-
                 var query = context.HttpContext.Request.Query;
 
                 var behaviour = defaultMethodBehaviour;
@@ -245,31 +201,14 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     };
                 }
 
-                var existingObject = db.GetByField<TStored>(idFieldName, id);
+                var (response, methodBehaviour) = handler.DeleteMockWithMemoryDb<TStored, TResponse>(id, idFieldName, responseMapper, behaviour);
 
-                if (existingObject == null && behaviour == DefaultMethodBehaviour.Return204)
-                {
-                    return Results.NoContent();
-                }
-
-                if (existingObject == null && behaviour == DefaultMethodBehaviour.Return200)
-                {
-                    var mockResponse = mockFactory.CreateMockObject<TResponse>();
-                    return Results.Ok(mockResponse);
-                }
-
-                db.Delete<TStored>(idFieldName, id);
-
-                var response = responseMapper != null
-                    ? responseMapper(existingObject!)
-                    : mockFactory.CreateMockObject<TResponse>();
-
-                return behaviour switch
+                return methodBehaviour switch
                 {
                     DefaultMethodBehaviour.Return200 => Results.Ok(response),
-                    DefaultMethodBehaviour.Return201 => Results.Created($" /{typeof(TStored).Name.ToLower()}s/{id}", response),
+                    DefaultMethodBehaviour.Return201 => Results.Created($"/{typeof(TStored).Name.ToLower()}s/{id}", response),
                     DefaultMethodBehaviour.Return204 => Results.NoContent(),
-                    _ => throw new InvalidOperationException($"Unsupported method outcome: {outcome}")
+                    _ => throw new InvalidOperationException($"Unsupported method outcome: {methodBehaviour}")
                 };
             })
             .WithOpenApi(operation =>
@@ -346,16 +285,9 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 })
                 .AddEndpointFilter(async (context, next) =>
                 {
-                    var db = context.HttpContext.RequestServices.GetRequiredService<IMemoryDb>();
+                    var handler = context.HttpContext.RequestServices.GetRequiredService<IMemoryDbHandler>();
                     var mockFactory = context.HttpContext.RequestServices.GetRequiredService<IApiMockDataFactory>();
-
                     var query = context.HttpContext.Request.Query;
-
-                    var idProperty = typeof(T).GetProperty(idFieldName);
-                    if (idProperty == null)
-                    {
-                        throw new ArgumentException($"Field {idFieldName} does not exist on type {typeof(T).Name}");
-                    }
 
                     var id = context.GetArgument<object>(0);
 
@@ -370,41 +302,17 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                         };
                     }
 
-                    var item = db.GetByField<T>(idFieldName, id);
-                    if (item == null)
+                    T mockedItem = null;
+                    if (behaviour == NotFoundBehaviour.ReturnMockIfNotFound)
                     {
-                        if (behaviour == NotFoundBehaviour.ReturnMockIfNotFound)
-                        {
-                            var mockedItem = mockFactory.CreateMockObject<T>();
-                            if (idProperty != null && idProperty.CanWrite)
-                            {
-                                idProperty.SetValue(mockedItem, id);
-                            }
-
-                            return Results.Ok(mockedItem);
-                        }
-
-                        return Results.NotFound();
+                        mockedItem = mockFactory.CreateMockObject<T>();
+                        typeof(T).GetProperty(idFieldName)?.SetValue(mockedItem, id);
                     }
 
-                    return Results.Ok(item);
-                });
-        }
+                    var (item, resultBehaviour) = handler.GetMockFromMemoryDb<T>(id, idFieldName, behaviour, mockedItem);
 
-        private static TStored MapRequestToStored<TRequest, TStored>(TRequest request, TStored storedObject)
-            where TRequest : class
-            where TStored : class
-        {
-            foreach (var property in typeof(TRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-            {
-                var targetProperty = typeof(TStored).GetProperty(property.Name, BindingFlags.Public | BindingFlags.Instance);
-                if (targetProperty != null && targetProperty.CanWrite)
-                {
-                    var value = property.GetValue(request);
-                    targetProperty.SetValue(storedObject, value);
-                }
-            }
-            return storedObject;
+                    return item != null ? Results.Ok(item) : Results.NotFound();
+                });
         }
     }
 }

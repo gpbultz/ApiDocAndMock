@@ -312,6 +312,33 @@ app.MapGet("/api/items", () => Results.Ok())
 - They promote consistency and reduce the need to manually define Swagger attributes for each endpoint.
 - Ensure `IMemoryDb`, `CommonResponseConfigurations`, and `ApiMockDataFactory` are properly registered in the DI container when using these methods.
 
+---
+
+### 10. `WithAuthorizationRoles`
+
+**Description**: Adds role-based authorization to endpoints and documents the required roles in Swagger.
+
+**Parameters**:
+
+- `roles` _(params string[])_ – List of required roles for the endpoint.
+
+**Usage**:
+
+```csharp
+app.MapGet("/api/secure", () => Results.Ok())
+   .WithAuthorizationRoles("Admin", "Manager");
+```
+
+**OpenAPI Effect**:
+
+- Requires specified roles for the endpoint.
+- If the authorization mode is `XRolesHeader`, adds `X-Roles` to the header documentation in Swagger.
+
+**Notes**:
+- Supports both JWT-based role checking and custom `X-Roles` header authorization.
+- Updates Swagger to document the required roles and ensure proper authorization behavior.
+
+---
 
 # OpenApiMockExtensions For MinimalApi Endpoints
 ## Overview
@@ -386,6 +413,52 @@ app.MapGet("/api/items", () => Results.Ok())
 
 - Generates a list of 10 mock `Item` objects.
 - Displays the list in the response body for `200 OK`.
+
+
+---
+
+### 4. `WithEnrichedMockedResponse<T>`
+
+**Description**: Documents a mock response enriched with pagination and hypermedia links, enhancing the realism and usability of API documentation. This method automatically applies pagination and HATEOAS links to the response based on configuration.
+
+**Type Parameter**:
+
+- **`T`**: The type of object to mock. Must inherit from `ApiResponseBase`.
+
+**Parameters**:
+
+- `includePages` _(bool, optional)_ – Whether to include pagination metadata.
+- `includeLinks` _(bool, optional)_ – Whether to include HATEOAS links.
+- `resourcePath` _(string, optional)_ – The base resource path used to generate links.
+- `pageIdField` _(string, optional)_ – The field used to extract the unique identifier (default: `Id`).
+- `totalCount` _(int, optional)_ – The total number of records (default: `50`).
+- `pageSize` _(int, optional)_ – The number of records per page (default: `10`).
+- `currentPage` _(int, optional)_ – The current page number (default: `1`).
+
+**Usage**:
+
+```csharp
+app.MapGet("/api/contacts", () => Results.Ok())
+   .WithEnrichedMockedResponse<GetContactsResponse>(includePages: true, includeLinks: true, resourcePath: "/api/contacts");
+```
+
+**OpenAPI Effect**:
+
+- Generates a mock example enriched with pagination and links.
+- Displays pagination metadata if `includePages` is `true`.
+- Generates `self`, `update`, and `delete` links if `includeLinks` is `true`.
+
+**Requirements**:
+
+- The response type `T` must implement `IApiResponse` and inherit from `ApiResponseBase`.
+- Example:
+
+```csharp
+public class GetContactsResponse : ApiResponseBase
+{
+    public List<GetContactByIdResponse> Contacts { get; set; }
+}
+```
 
 ---
 

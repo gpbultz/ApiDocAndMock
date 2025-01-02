@@ -11,6 +11,7 @@
 
         public string Region { get; set; }
         public string PostalCode { get; set; }
-
+        public Dictionary<Guid, Appointment> Appointments { get; set; } = new Dictionary<Guid, Appointment>();
+        
     }
 }

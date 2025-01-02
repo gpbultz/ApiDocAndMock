@@ -1,10 +1,8 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Authorization;
-using ApiDocAndMock.Infrastructure.Configurations;
 using ApiDocAndMock.Infrastructure.Utilities;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;

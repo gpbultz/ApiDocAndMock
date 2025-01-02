@@ -1,7 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Bogus;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ApiDocAndMock.Infrastructure.Configurations
 {
@@ -32,6 +31,68 @@ namespace ApiDocAndMock.Infrastructure.Configurations
                 var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
                 return mockDataFactory.CreateMockObjects<TNested>(count);
             };
+            return this;
+        }
+
+        public MockConfigurationBuilder<T> ForPropertyTuple<T1, T2>(string propertyName, Func<Faker, T1> item1Rule, Func<Faker, T2> item2Rule)
+        {
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                var item1 = item1Rule(faker);
+                var item2 = item2Rule(faker);
+                return Tuple.Create(item1, item2);
+            };
+
+            return this;
+        }
+
+        public MockConfigurationBuilder<T> ForPropertyDictionary<TKey, TValue>(string propertyName, int count, Func<Faker, TKey> keyRule, Func<Faker, TValue> valueRule, bool isPrimitive = false)
+            where TKey : notnull
+        {
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                var dict = new Dictionary<TKey, TValue>();
+
+                for (int i = 0; i < count; i++)
+                {
+                    dict[keyRule(faker)] = valueRule(faker);
+                }
+
+                return dict;
+            };
+
+            return this;
+        }
+
+        public MockConfigurationBuilder<T> ForPropertyDictionary<TKey, TValue>(string propertyName, int count, Func<Faker, TKey> keyRule, Func<Faker, TValue>? valueRule = null)
+            where TKey : notnull
+            where TValue : class, new()
+        {
+            _propertyConfigurations[propertyName] = faker =>
+            {
+                var dict = new Dictionary<TKey, TValue>();
+                var mockDataFactory = ServiceProviderHelper.GetService<IApiMockDataFactory>();
+
+                for (int i = 0; i < count; i++)
+                {
+                    var key = keyRule(faker);
+                    TValue value;
+
+                    if (valueRule != null)
+                    {
+                        value = valueRule(faker);
+                    }
+                    else
+                    {
+                        value = mockDataFactory.CreateMockObject<TValue>();
+                    }
+
+                    dict[key] = value;
+                }
+
+                return dict;
+            };
+
             return this;
         }
 

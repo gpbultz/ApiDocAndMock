@@ -1,15 +1,12 @@
-﻿using ApiDocAndMock.Application.Interfaces;
-using ApiDocAndMock.Infrastructure.Authorization;
+﻿using ApiDocAndMock.Infrastructure.Authorization;
 using ApiDocAndMock.Shared.Enums;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using System.Security.Claims;
 using System.Text;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
@@ -31,7 +28,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             {
                 var logger = serviceProvider.GetRequiredService<ILogger<IApplicationBuilder>>();
                 logger.LogInformation("Skipping AddMockAuthentication in Production environment.");
-                return services; 
+                return services;
             }
 
             // Store the mode in DI for later access

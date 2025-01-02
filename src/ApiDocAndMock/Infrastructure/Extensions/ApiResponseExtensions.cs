@@ -4,15 +4,8 @@ namespace ApiDocAndMock.Infrastructure.Extensions
 {
     public static class ApiResponseExtensions
     {
-        public static T WithPaginationAndLinks<T>(
-        this T response,
-        int totalCount,
-        int pageSize,
-        int currentPage,
-        string? resourcePath = null,
-        bool includeLinks = true,
-        bool includePages = true)
-        where T : class
+        public static T WithPaginationAndLinks<T>(this T response, int totalCount, int pageSize, int currentPage, string? resourcePath = null, bool includeLinks = true, bool includePages = true)
+            where T : class
         {
             if (response is ApiResponseBase apiResponse)
             {

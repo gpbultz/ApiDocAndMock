@@ -1,4 +1,6 @@
 ﻿
+using TestApi.Domain.Entities;
+
 namespace TestApi.Application.Queries.Contacts
 {
     public class GetContactByIdResponse
@@ -18,5 +20,6 @@ namespace TestApi.Application.Queries.Contacts
         public string Region { get; set; }
 
         public string PostalCode { get; set; }
+        public Dictionary<Guid, Appointment> Appointments { get; set; } = new Dictionary<Guid, Appointment>();
     }
 }
