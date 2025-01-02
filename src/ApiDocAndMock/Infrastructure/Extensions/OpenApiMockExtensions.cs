@@ -3,7 +3,6 @@ using ApiDocAndMock.Application.Models.Responses;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using System.Text.Json;

@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Extensions
 {
@@ -35,7 +34,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 return new MemoryDb();
             });
 
-            
+
             return services;
         }
 
@@ -62,7 +61,7 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                 var handler = context.HttpContext.RequestServices.GetRequiredService<IMemoryDbHandler>();
                 var stored = mockDataFactory.CreateMockObject<TStored>();
 
-                var (response, locationPath) =  handler.CreateMockWithMemoryDb<TRequest, TStored, TResponse>(request, stored, customMapper, idFieldName, generateId, locationPathBuilder);
+                var (response, locationPath) = handler.CreateMockWithMemoryDb<TRequest, TStored, TResponse>(request, stored, customMapper, idFieldName, generateId, locationPathBuilder);
                 return Results.Created(locationPath, response);
 
             });
@@ -315,21 +314,5 @@ namespace ApiDocAndMock.Infrastructure.Extensions
                     return item != null ? Results.Ok(item) : Results.NotFound();
                 });
         }
-
-        //private static TStored MapRequestToStored<TRequest, TStored>(TRequest request, TStored storedObject)
-        //    where TRequest : class
-        //    where TStored : class
-        //{
-        //    foreach (var property in typeof(TRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        //    {
-        //        var targetProperty = typeof(TStored).GetProperty(property.Name, BindingFlags.Public | BindingFlags.Instance);
-        //        if (targetProperty != null && targetProperty.CanWrite)
-        //        {
-        //            var value = property.GetValue(request);
-        //            targetProperty.SetValue(storedObject, value);
-        //        }
-        //    }
-        //    return storedObject;
-        //}
     }
 }

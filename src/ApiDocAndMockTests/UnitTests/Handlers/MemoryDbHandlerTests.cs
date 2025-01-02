@@ -1,22 +1,10 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Data;
 using ApiDocAndMock.Infrastructure.Handlers;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Http;
+using ApiDocAndMock.Shared.Enums;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ApiDocAndMock.Infrastructure.Extensions;
-using Microsoft.Extensions.DependencyInjection;
-using System.Reflection.Metadata;
-using ApiDocAndMock.Shared.Enums;
 
 namespace ApiDocAndMockTests.UnitTests.Handlers
 {
@@ -78,11 +66,11 @@ namespace ApiDocAndMockTests.UnitTests.Handlers
 
             // Act
             var (response, outcome) = _handler.UpdateMockWithMemoryDb<UpdateItemRequest, Item, ItemResponse>(
-                request, 
-                request.Id, 
-                existingItem, 
-                "Id", 
-                "Id", 
+                request,
+                request.Id,
+                existingItem,
+                "Id",
+                "Id",
                 req =>
                 {
                     var updated = new Item
@@ -289,5 +277,5 @@ namespace ApiDocAndMockTests.UnitTests.Handlers
         public string Name { get; set; }
     }
 
-    
+
 }

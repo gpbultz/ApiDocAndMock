@@ -2,7 +2,6 @@
 using ApiDocAndMock.Application.Models.Responses;
 using ApiDocAndMock.Infrastructure.Utilities;
 using Microsoft.AspNetCore.Mvc;
-using TestApi.Application.Commands.Contacts;
 
 namespace TestApi.Infrastructure.API
 {

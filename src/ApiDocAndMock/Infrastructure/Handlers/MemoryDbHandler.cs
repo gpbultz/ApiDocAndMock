@@ -1,18 +1,7 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Data;
 using ApiDocAndMock.Shared.Enums;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ApiDocAndMock.Infrastructure.Handlers
 {
@@ -46,7 +35,7 @@ namespace ApiDocAndMock.Infrastructure.Handlers
             typeof(TResponse).GetProperty(idFieldName)?.SetValue(response, newId);
             var locationPath = locationPathBuilder != null ? locationPathBuilder(storedObject) : $"/{typeof(TStored).Name.ToLower()}s/{newId}";
 
-            return (response, locationPath); 
+            return (response, locationPath);
         }
 
         public (TResponse response, string outcome) UpdateMockWithMemoryDb<TRequest, TStored, TResponse>(TRequest request, object id, TStored updatedObject, string idFieldName = "Id", string queryIdFieldName = "Id", Func<TRequest, TStored>? customMapper = null,
