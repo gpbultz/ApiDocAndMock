@@ -38,6 +38,11 @@ namespace ApiDocAndMock.Infrastructure.Utilities
                    ?? _serviceProvider
                    ?? throw new InvalidOperationException("Unable to resolve IServiceProvider from HttpContext or fallback provider.");
         }
+
+        public static void SetServiceProvider(IServiceProvider serviceProvider)
+        {
+            _serviceProvider = serviceProvider;
+        }
     }
 
 }
