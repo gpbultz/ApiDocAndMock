@@ -73,6 +73,56 @@ namespace ApiDocAndMock.Infrastructure.Handlers
             return (response, defaultMethodOutcome);
         }
 
+        public (TResponse response, DefaultMethodBehaviour behaviour) DeleteMockWithMemoryDb<TStored, TResponse>(object id, string idFieldName = "Id", Func<TStored, TResponse>? responseMapper = null, DefaultMethodBehaviour defaultMethodBehaviour = DefaultMethodBehaviour.Return204)
+            where TStored : class, new()
+            where TResponse : class, new()
+        {
+            var existingObject = _memoryDb.GetByField<TStored>(idFieldName, id);
+
+            // Handle 'not found' scenarios
+            if (existingObject == null)
+            {
+                if (defaultMethodBehaviour == DefaultMethodBehaviour.Return204)
+                {
+                    return (null, DefaultMethodBehaviour.Return204);  // NoContent
+                }
+
+                var mockResponse = _mockDataFactory.CreateMockObject<TResponse>();
+                return (mockResponse, DefaultMethodBehaviour.Return200);
+            }
+
+            // Delete the object
+            _memoryDb.Delete<TStored>(idFieldName, id);
+
+            // Generate response if needed
+            var response = responseMapper != null
+                ? responseMapper(existingObject)
+                : _mockDataFactory.CreateMockObject<TResponse>();
+
+            return (response, defaultMethodBehaviour);
+        }
+
+        public (T? item, NotFoundBehaviour behaviour) GetMockFromMemoryDb<T>(object id, string idFieldName = "Id", NotFoundBehaviour defaultBehaviour = NotFoundBehaviour.Return404, T mockedItem = null)
+            where T : class, new()
+        {
+            var item = _memoryDb.GetByField<T>(idFieldName, id);
+
+            if (item == null)
+            {
+                if (defaultBehaviour == NotFoundBehaviour.ReturnMockIfNotFound)
+                {
+
+                    typeof(T).GetProperty(idFieldName)?.SetValue(mockedItem, id);
+
+                    return (mockedItem, NotFoundBehaviour.ReturnMockIfNotFound);
+                }
+
+                return (null, NotFoundBehaviour.Return404);
+            }
+
+            return (item, default);
+        }
+
 
         private static TStored MapRequestToStored<TRequest, TStored>(TRequest request, TStored storedObject)
             where TRequest : class

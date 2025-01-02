@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using ApiDocAndMock.Infrastructure.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection.Metadata;
+using ApiDocAndMock.Shared.Enums;
 
 namespace ApiDocAndMockTests.UnitTests.Handlers
 {
@@ -139,6 +140,129 @@ namespace ApiDocAndMockTests.UnitTests.Handlers
             Assert.That(response.Name, Is.EqualTo("GeneratedItem"));
             Assert.That(response.Id, Is.EqualTo(request.Id));
             Assert.That(outcome, Is.EqualTo("Return200"));
+        }
+
+        [Test]
+        public void DeleteMockWithMemoryDb_ShouldReturnNoContent_IfObjectNotFound()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            _mockMemoryDb
+                .Setup(db => db.GetByField<Item>("Id", id))
+                .Returns((Item)null);
+
+            // Act
+            var (response, outcome) = _handler.DeleteMockWithMemoryDb<Item, ItemResponse>(
+                id,
+                "Id",
+                stored => new ItemResponse { Id = id, Name = "DeletedItem" }
+            );
+
+            // Assert
+            _mockMemoryDb.Verify(db => db.Delete<Item>("Id", id), Times.Never);
+            Assert.That(response, Is.Null);
+            Assert.That(outcome, Is.EqualTo(DefaultMethodBehaviour.Return204));
+        }
+
+        [Test]
+        public void DeleteMockWithMemoryDb_ShouldDeleteAndReturnOk()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var existingItem = new Item { Id = id, Name = "ExistingItem" };
+
+            _mockMemoryDb
+                .Setup(db => db.GetByField<Item>("Id", id))
+                .Returns(existingItem);
+
+            // Act
+            var (response, outcome) = _handler.DeleteMockWithMemoryDb<Item, ItemResponse>(
+                id,
+                "Id",
+                stored => new ItemResponse { Id = stored.Id, Name = stored.Name }
+            );
+
+            // Assert
+            _mockMemoryDb.Verify(db => db.Delete<Item>("Id", id), Times.Once);
+            Assert.That(response.Name, Is.EqualTo("ExistingItem"));
+            Assert.That(response.Id, Is.EqualTo(id));
+            Assert.That(outcome, Is.EqualTo(DefaultMethodBehaviour.Return204));
+        }
+
+        [Test]
+        public void GetMockFromMemoryDb_ShouldReturnItemIfFound()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var existingItem = new Item { Id = id, Name = "FoundItem" };
+
+            _mockMemoryDb
+                .Setup(db => db.GetByField<Item>("Id", id))
+                .Returns(existingItem);
+
+            // Act
+            var (item, behaviour) = _handler.GetMockFromMemoryDb<Item>(id, "Id");
+
+            // Assert
+            Assert.That(item, Is.Not.Null);
+            Assert.That(item!.Id, Is.EqualTo(id));
+        }
+
+        [Test]
+        public void GetMockFromMemoryDb_ShouldReturnMockIfNotFoundAndConfigured()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+            var mockItem = new Item { Id = id, Name = "MockedItem" };
+
+            _mockMemoryDb
+                .Setup(db => db.GetByField<Item>("Id", id))
+                .Returns((Item)null);
+
+            _mockMockDataFactory
+                .Setup(factory => factory.CreateMockObject<Item>(1))
+                .Returns(mockItem);
+
+            // Act
+            var (item, behaviour) = _handler.GetMockFromMemoryDb<Item>(
+                id,
+                "Id",
+                NotFoundBehaviour.ReturnMockIfNotFound
+                , mockItem
+            );
+
+            // Assert
+            Assert.That(item, Is.Not.Null);
+            Assert.That(item!.Id, Is.EqualTo(id));
+            Assert.That(item.Name, Is.EqualTo("MockedItem"));
+            Assert.That(behaviour, Is.EqualTo(NotFoundBehaviour.ReturnMockIfNotFound));
+        }
+
+        [Test]
+        public void GetMockFromMemoryDb_ShouldReturnNotFoundWhenNoMocking()
+        {
+            // Arrange
+            var id = Guid.NewGuid();
+
+            _mockMemoryDb
+                .Setup(db => db.GetByField<Item>("Id", id))
+                .Returns((Item)null);
+
+            _mockMockDataFactory
+                .Setup(factory => factory.CreateMockObject<Item>(1))
+                .Returns((Item)null);
+
+            // Act
+            var (item, behaviour) = _handler.GetMockFromMemoryDb<Item>(
+                id,
+                "Id",
+                NotFoundBehaviour.Return404
+            );
+
+            // Assert
+            Assert.That(item, Is.Null);
+            Assert.That(behaviour, Is.EqualTo(NotFoundBehaviour.Return404));
         }
     }
 
