@@ -1,92 +1,63 @@
-# Release Notes - Version 1.1.0
-
-## 📦 New in This Release
+# Release 1.2.0 – Complex Type Support for Dictionary and Tuple
 
 ---
 
-### 🔧 Dependency Injection Refactor
+## What's New
+### 🚀 Complex Type Support for Dictionary and Tuple
+- **Dictionary<TKey, TValue> Support**:  
+  - Added support for mock generation of dictionaries with either primitive or complex object values.  
+  - If the value type (`TValue`) is a complex object, its faker rules are applied automatically if a configuration exists.  
+  - This eliminates the need to redefine faker rules for each dictionary—simply register the object configuration once.  
 
-#### Overview:
+  **Example:**  
+  ```csharp
+  config.RegisterConfiguration<Appointment>(cfg =>
+  {
+      cfg
+          .ForProperty("DateOfAppointment", faker => faker.Date.Future())
+          .ForProperty("Description", faker => "Meeting about " + faker.Company.CatchPhrase());
+  });
 
-- Refactored static classes to support **Dependency Injection (DI)**.
-- This simplifies testing, improves maintainability, and aligns with modern best practices.
+  config.RegisterConfiguration<GetContactsResponse>(cfg =>
+  {
+      cfg
+          .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5)
+          .ForPropertyDictionary<Guid, Appointment>("Appointments", 3,
+              faker => Guid.NewGuid(),
+              faker => ServiceProviderHelper.GetService<IApiMockDataFactory>().CreateMockObject<Appointment>());
+  });
+  ```
 
-#### Key Changes:
+- **Tuple<T1, T2> Support**:  
+  - Introduced support for `Tuple<T1, T2>` properties within mock configurations.  
+  - The configuration can apply faker rules to both tuple values individually.  
 
-- **`ApiMockDataFactory`** and **`MockConfigurationsFactory`** are now injectable via DI.
-- The need for static wrappers has been removed, allowing seamless integration.
-- `AddMockingConfigurations` now registers services directly within the DI container.
-- Example:
-    
-    ```csharp
-    builder.Services.AddMockingConfigurations(config =>
-    {
-        config.RegisterConfiguration<Booking>(cfg =>
-        {
-            cfg.ForPropertyObject<Room>("Room");
-        });
-    });
-    ```
-    
-
-#### Impact:
-
-- Backwards compatibility is maintained through transitional wrappers.
-- Developers can now directly inject dependencies into endpoint handlers, controllers, or services.
-
----
-
-### 🐞 Bug Fixes - Memory DB
-
-#### Overview:
-
-- Addressed issues where type mismatches during lookups caused failures in `GetByField`, `Update`, and `Delete` operations.
-- Resolved cases where GUIDs passed as strings could not match stored GUID values.
-
-#### Fixes:
-
-1. **Type Conversion**:
-    
-    - `GetByField`, `Update`, and `Delete` now dynamically convert `string` GUIDs to `Guid` before comparison.
-    
-    ```csharp
-    if (property.PropertyType == typeof(Guid) && value is string stringValue)
-    {
-        Guid.TryParse(stringValue, out var guidValue);
-        convertedValue = guidValue;
-    }
-    ```
-    
-2. **Path Parameter Case Sensitivity**:
-    
-    - Fixed an issue where Swagger/OpenAPI generated duplicate path parameters (`id` vs `Id`).
-    - Case-insensitive checks now prevent duplication.
-    
-    ```csharp
-    if (!operation.Parameters.Any(p =>
-        string.Equals(p.Name, sourceIdFieldName, StringComparison.OrdinalIgnoreCase) &&
-        p.In == ParameterLocation.Path))
-    ```
-    
-3. **Empty Store Issue**:
-    
-    - Addressed cases where `_store` contained a key but with an empty list (`Count = 0`), causing unexpected lookup failures.
-    - Now properly verifies if the item exists before deletion.
-
-#### Testing & Verification:
-
-- Unit tests have been updated to cover scenarios where `Guid`, `int`, and `string` types are passed in.
-- Verified that the changes do not impact existing workflows.
+  **Example:**  
+  ```csharp
+  config.RegisterConfiguration<Location>(cfg =>
+  {
+      cfg
+          .ForPropertyTuple("Coordinates",
+              faker => faker.Random.Double(0, 100),
+              faker => faker.Random.Double(0, 100));
+  });
+  ```
 
 ---
 
-### ⚙️ How to Upgrade
+## Improvements
+- **Streamlined Dictionary Handling**:  
+  - Complex object values in dictionaries are created via `IApiMockDataFactory` automatically.  
+  - Simplified configuration logic to reduce redundant code for nested objects.  
 
-1. Update your NuGet package to version `1.1.0`:
-    
-    ```bash
-    dotnet add package ApiDocAndMock --version 1.1.0
-    ```
-    
-2. Modify your service registrations to use the new DI patterns.
-3. Test existing workflows to ensure type conversions work as expected.
+- **Enhanced Error Handling**:  
+  - Improved error messages for invalid dictionary configurations or missing faker rules.  
+
+---
+
+## Unit Test Coverage
+- **Comprehensive Tests**:  
+  - Full test coverage for dictionaries with primitive and complex values.  
+  - Validation of tuple generation with faker rules applied to both items.  
+  - Mocking configurations tested for various property combinations, including nested lists, objects, and dictionaries.  
+

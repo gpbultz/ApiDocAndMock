@@ -189,8 +189,27 @@ app.MapGet("/api/items", () => Results.Ok())
 
 ---
 
-## Notes
+### 10. `WithAuthorizationRoles`
 
-- These extensions streamline OpenAPI/Swagger documentation for ASP.NET Minimal APIs.
-- They promote consistency and reduce the need to manually define Swagger attributes for each endpoint.
-- Ensure `IMemoryDb`, `CommonResponseConfigurations`, and `ApiMockDataFactory` are properly registered in the DI container when using these methods.
+**Description**: Adds role-based authorization to endpoints and documents the required roles in Swagger.
+
+**Parameters**:
+
+- `roles` _(params string[])_ – List of required roles for the endpoint.
+
+**Usage**:
+
+```csharp
+app.MapGet("/api/secure", () => Results.Ok())
+   .WithAuthorizationRoles("Admin", "Manager");
+```
+
+**OpenAPI Effect**:
+
+- Requires specified roles for the endpoint.
+- If the authorization mode is `XRolesHeader`, adds `X-Roles` to the header documentation in Swagger.
+
+**Notes**:
+- Supports both JWT-based role checking and custom `X-Roles` header authorization.
+- Updates Swagger to document the required roles and ensure proper authorization behavior.
+

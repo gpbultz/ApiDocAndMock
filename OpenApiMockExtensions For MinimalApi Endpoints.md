@@ -73,6 +73,60 @@ app.MapGet("/api/items", () => Results.Ok())
 
 ---
 
+### 4. `WithEnrichedMockedResponse<T>`
+
+**Description**: Documents a mock response enriched with pagination and hypermedia links, enhancing the realism and usability of API documentation. This method automatically applies pagination and HATEOAS links to the response based on configuration.
+
+**Type Parameter**:
+
+- **`T`**: The type of object to mock. Must inherit from `ApiResponseBase`.
+
+**Parameters**:
+
+- `includePages` _(bool, optional)_ – Whether to include pagination metadata.
+- `includeLinks` _(bool, optional)_ – Whether to include HATEOAS links.
+- `resourcePath` _(string, optional)_ – The base resource path used to generate links.
+- `pageIdField` _(string, optional)_ – The field used to extract the unique identifier (default: `Id`).
+- `totalCount` _(int, optional)_ – The total number of records (default: `50`).
+- `pageSize` _(int, optional)_ – The number of records per page (default: `10`).
+- `currentPage` _(int, optional)_ – The current page number (default: `1`).
+
+**Usage**:
+
+```csharp
+app.MapGet("/api/contacts", () => Results.Ok())
+   .WithEnrichedMockedResponse<GetContactsResponse>(includePages: true, includeLinks: true, resourcePath: "/api/contacts");
+```
+
+**OpenAPI Effect**:
+
+- Generates a mock example enriched with pagination and links.
+- Displays pagination metadata if `includePages` is `true`.
+- Generates `self`, `update`, and `delete` links if `includeLinks` is `true`.
+
+**Requirements**:
+
+- The response type `T` must implement `IApiResponse` and inherit from `ApiResponseBase`.
+- Example:
+
+```csharp
+public abstract class ApiResponseBase : IApiResponse
+{
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PaginationMetadata? Pagination { get; set; }
+
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public LinksContainer? Links { get; set; }
+}
+
+public class GetContactsResponse : ApiResponseBase
+{
+    public List<GetContactByIdResponse> Contacts { get; set; }
+}
+```
+
+---
+
 ## Internal Logic
 
 ### 1. Mock Generation
@@ -80,11 +134,6 @@ app.MapGet("/api/items", () => Results.Ok())
 - Uses `ApiMockDataFactory.CreateMockObjects<T>(count)` to generate mock objects.
 - For single responses, the first object from the generated list is used.
 - For list responses, the entire list is serialized and returned.
-
-### 2. Response Integration
-
-- The generated mock objects are inserted directly into the `OpenApiResponse` or `OpenApiRequestBody`.
-- The schema for the mock objects is referenced in the response to ensure consistency in Swagger.
 
 ---
 
@@ -98,5 +147,6 @@ app.MapGet("/api/items", () => Results.Ok())
 ## Notes
 
 - These extensions simplify the process of generating mock request/response examples for endpoints.
-- They enhance testing and documentation by ensuring consistent, pre-generated examples across Swagger documentation.
 - `Produces<T>(200)` ensures that the schema is globally registered, promoting reuse and reducing redundancy.
+- This extension enhances testing and documentation by ensuring consistent, pre-generated examples across Swagger documentation.
+
