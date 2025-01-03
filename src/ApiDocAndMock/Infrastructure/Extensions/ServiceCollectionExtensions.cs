@@ -39,6 +39,20 @@ namespace ApiDocAndMock.Infrastructure.Extensions
             return services;
         }
 
+        public static IServiceCollection SetDefaultFakerRules(this IServiceCollection services, Action<Dictionary<string, Func<Faker, object>>> configure)
+        {
+            services.AddSingleton<IMockConfigurationsFactory, MockConfigurationsFactory>();
+
+            services.Configure<MockConfigurationsFactory>(factory =>
+            {
+                factory.SetDefaultFakerRules(configure);
+            });
+
+            services.AddSingleton<IHostedService, ApplyConfigurationsHostedService>();
+
+            return services;
+        }
+
         public static IServiceCollection AddCommonResponseConfigurations(this IServiceCollection services, Action<ICommonResponseConfigurations>? configureOptions = null)
         {
             services.AddSingleton<ICommonResponseConfigurations>(provider =>
