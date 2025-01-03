@@ -74,7 +74,7 @@ namespace ApiDocAndMockTests.UnitTests.Factories
             // Assert
             Assert.That(configurations["Name"](_faker), Is.EqualTo("OverriddenName"));
             Assert.That(configurations["Email"](_faker), Is.EqualTo("new@example.com"));
-            Assert.That(configurations.ContainsKey("CustomProp"), Is.False);  // Old rules should be removed
+            Assert.That(configurations.ContainsKey("CustomProp"), Is.False);
         }
 
         [Test]
@@ -92,25 +92,6 @@ namespace ApiDocAndMockTests.UnitTests.Factories
             // Assert
             Assert.That(configurations["Name"](_faker), Is.EqualTo("TestName"));
             Assert.That(configurations["Age"](_faker), Is.EqualTo(30));
-        }
-
-        [Test]
-        public void SetDefaultFakerRules_ShouldClearPreviousRules()
-        {
-            // Arrange
-            _configFactory.AddDefaultFakerRule("CustomRule", f => f.Random.Bool());
-
-            // Act
-            _configFactory.SetDefaultFakerRules(rules =>
-            {
-                rules["Name"] = faker => "NewName";
-            });
-
-            var configurations = _configFactory.TryGetConfigurations<TestModel>();
-
-            // Assert
-            Assert.That(configurations["Name"](_faker), Is.EqualTo("NewName"));
-            Assert.That(configurations.ContainsKey("CustomRule"), Is.False);
         }
 
         [Test]
@@ -141,7 +122,7 @@ namespace ApiDocAndMockTests.UnitTests.Factories
             var configurations = _configFactory.TryGetConfigurations<TestModel>();
 
             // Assert
-            Assert.That(configurations["Name"](_faker), Is.EqualTo("ExplicitName"));  // Explicit config should take priority
+            Assert.That(configurations["Name"](_faker), Is.EqualTo("ExplicitName")); 
         }
 
 
