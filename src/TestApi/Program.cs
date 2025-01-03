@@ -39,12 +39,20 @@ builder.Services.AddDefaultFakerRules(rules =>
     rules["Phone"] = faker => "+44 " + faker.Phone.PhoneNumber();  // UK-specific format
 });
 
+//builder.Services.SetDefaultFakerRules(defaultRules =>
+//{
+//    defaultRules["Name"] = faker => faker.Name.FullName();
+//    defaultRules["Email"] = faker => faker.Internet.Email();
+//    defaultRules["Address"] = faker => faker.Address.FullAddress();
+//    defaultRules["Phone"] = faker => faker.Phone.PhoneNumber();
+//});
+
 builder.Services.AddMockingConfigurations(config =>
 {
     config.RegisterConfiguration<Appointment>(cfg =>
     {
         cfg
-            .ForProperty("DateOfAppointment", faker => faker.Date.Random)
+            .ForProperty("DateOfAppointment", faker => faker.Date.Between(DateTime.Now.AddYears(-1), DateTime.Now))
             .ForProperty("Description", faker => "Meeting with regards to " + faker.Commerce.Department());
     });
 

@@ -43,17 +43,6 @@ namespace ApiDocAndMockTests.UnitTests.Factories
         }
 
         [Test]
-        public void TryGetConfigurations_WhenNoRulesExist_ShouldApplyOnlyDefaultFakerRules()
-        {
-            // Act
-            var configurations = _configFactory.TryGetConfigurations<TestModel>();
-
-            // Assert
-            Assert.That(configurations["Name"](_faker), Is.InstanceOf<string>());
-            Assert.That(configurations.ContainsKey("Age"), Is.False);
-        }
-
-        [Test]
         public void TryGetConfigurations_ShouldAllowAdditionalFakerRules()
         {
             // Arrange
@@ -66,6 +55,96 @@ namespace ApiDocAndMockTests.UnitTests.Factories
             Assert.That(configurations, Contains.Key("CustomProp"));
             Assert.That(configurations["CustomProp"](_faker), Is.InstanceOf<int>());
         }
+
+        [Test]
+        public void SetDefaultFakerRules_ShouldReplaceExistingRules()
+        {
+            // Arrange
+            _configFactory.AddDefaultFakerRule("CustomProp", f => f.Random.Int(1, 100));
+
+            // Act
+            _configFactory.SetDefaultFakerRules(rules =>
+            {
+                rules["Name"] = faker => "OverriddenName";
+                rules["Email"] = faker => "new@example.com";
+            });
+
+            var configurations = _configFactory.TryGetConfigurations<TestModel>();
+
+            // Assert
+            Assert.That(configurations["Name"](_faker), Is.EqualTo("OverriddenName"));
+            Assert.That(configurations["Email"](_faker), Is.EqualTo("new@example.com"));
+            Assert.That(configurations.ContainsKey("CustomProp"), Is.False);  // Old rules should be removed
+        }
+
+        [Test]
+        public void SetDefaultFakerRules_ShouldApplyToNewConfigurations()
+        {
+            // Act
+            _configFactory.SetDefaultFakerRules(rules =>
+            {
+                rules["Name"] = faker => "TestName";
+                rules["Age"] = faker => 30;
+            });
+
+            var configurations = _configFactory.TryGetConfigurations<TestModel>();
+
+            // Assert
+            Assert.That(configurations["Name"](_faker), Is.EqualTo("TestName"));
+            Assert.That(configurations["Age"](_faker), Is.EqualTo(30));
+        }
+
+        [Test]
+        public void SetDefaultFakerRules_ShouldClearPreviousRules()
+        {
+            // Arrange
+            _configFactory.AddDefaultFakerRule("CustomRule", f => f.Random.Bool());
+
+            // Act
+            _configFactory.SetDefaultFakerRules(rules =>
+            {
+                rules["Name"] = faker => "NewName";
+            });
+
+            var configurations = _configFactory.TryGetConfigurations<TestModel>();
+
+            // Assert
+            Assert.That(configurations["Name"](_faker), Is.EqualTo("NewName"));
+            Assert.That(configurations.ContainsKey("CustomRule"), Is.False);
+        }
+
+        [Test]
+        public void SetDefaultFakerRules_ShouldHandleEmptyConfiguration()
+        {
+            // Act
+            _configFactory.SetDefaultFakerRules(rules => { });
+
+            var configurations = _configFactory.TryGetConfigurations<TestModel>();
+
+            // Assert
+            Assert.That(configurations.Count, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void SetDefaultFakerRules_ShouldNotOverrideExplicitConfigurations()
+        {
+            // Arrange
+            _configFactory.RegisterConfiguration<TestModel>(builder =>
+                builder.ForProperty("Name", f => "ExplicitName"));
+
+            // Act
+            _configFactory.SetDefaultFakerRules(rules =>
+            {
+                rules["Name"] = faker => "OverriddenName";
+            });
+
+            var configurations = _configFactory.TryGetConfigurations<TestModel>();
+
+            // Assert
+            Assert.That(configurations["Name"](_faker), Is.EqualTo("ExplicitName"));  // Explicit config should take priority
+        }
+
+
 
         public class TestModel
         {

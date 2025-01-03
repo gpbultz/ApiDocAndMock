@@ -2,7 +2,10 @@
 using ApiDocAndMock.Application.Models.Responses;
 using Bogus;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using System.Reflection;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
@@ -11,9 +14,12 @@ namespace ApiDocAndMock.Infrastructure.Mocking
     {
         private const int NESTED_COUNT = 20;
         private readonly IServiceProvider _serviceProvider;
-        public ApiMockDataFactory(IServiceProvider serviceProvider)
+        private readonly ILogger<ApiMockDataFactory> _logger;
+
+        public ApiMockDataFactory(IServiceProvider serviceProvider, ILogger<ApiMockDataFactory> logger)
         {
             _serviceProvider = serviceProvider;
+            _logger = logger;
         }
 
         /// <summary>
@@ -35,6 +41,12 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 apiResponse.Pagination = null;
                 apiResponse.Links = null;
             }
+
+            var hashCode = instance.GetHashCode();
+            var propertyValues = GetPropertyValues(instance);
+
+            _logger.LogInformation($"Successfully created mock object of type {typeof(T).Name} with hashcode {hashCode}. Properties: {propertyValues}");
+
 
             return instance;
         }
@@ -65,6 +77,7 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             var mockConfigurationsFactory = _serviceProvider.GetService<IMockConfigurationsFactory>();
 
             var type = typeof(T);
+            _logger.LogDebug($"Applying mock rules for {type.Name} (HashCode: {instance.GetHashCode()})");
 
             // Retrieve the mock rules for the current type
             var mockRules = mockConfigurationsFactory?.TryGetConfigurations<T>();
@@ -80,28 +93,34 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 {
                     object value;
 
-                    if (mockRules.TryGetValue(property.Name, out var generator))
+                    if (mockRules != null && mockRules.TryGetValue(property.Name, out var generator))
                     {
                         value = generator(faker);
+                        _logger.LogDebug($"Applied configured mock rule for {property.Name} on {type.Name}. Value: {value}");
                     }
                     else
                     {
                         value = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, mockRules, nestedCount);
+                        _logger.LogDebug($"Generated default value for {property.Name} on {type.Name}. Value: {value}");
                     }
 
                     property.SetValue(instance, value);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error setting property {property.Name} on type {type.Name}: {ex.Message}");
+                    _logger.LogError(ex, $"Failed to set property {property.Name} on {type.Name}");
                 }
             }
         }
         private object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
         {
-            if (configurations.TryGetValue(name, out var fakerRule))
+            if (configurations != null && configurations.TryGetValue(name, out var fakerRule))
             {
-                return fakerRule(faker);
+                var ruleResult = fakerRule(faker);
+                if (type.IsAssignableFrom(ruleResult.GetType()))
+                {
+                    return ruleResult;
+                }
             }
 
             if (nestedCount <= 0)
@@ -171,6 +190,79 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 return Activator.CreateInstance(type, item1, item2);
             }
 
+            
+
+            // Handle concurrent dictionaries
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(ConcurrentDictionary<,>))
+            {
+                var keyType = type.GetGenericArguments()[0];
+                var valueType = type.GetGenericArguments()[1];
+                var concurrentDictType = typeof(ConcurrentDictionary<,>).MakeGenericType(keyType, valueType);
+                var concurrentDict = (IDictionary)Activator.CreateInstance(concurrentDictType);
+
+                for (var i = 0; i < faker.Random.Int(1, 5); i++)
+                {
+                    var key = GenerateDefaultValueDynamically(name, keyType, faker, configurations, nestedCount - 1);
+                    var value = GenerateDefaultValueDynamically(name, valueType, faker, configurations, nestedCount - 1);
+                    if (key != null && value != null)
+                    {
+                        concurrentDict.Add(key, value);
+                    }
+                }
+                return concurrentDict;
+            }
+
+            // Handle observable collections and collections
+            if (type.IsGenericType && (type.GetGenericTypeDefinition() == typeof(ObservableCollection<>) || type.GetGenericTypeDefinition() == typeof(Collection<>)))
+            {
+                var genericType = type.GetGenericArguments()[0];
+                var collectionType = type.GetGenericTypeDefinition().MakeGenericType(genericType);
+
+                var collection = (IList)Activator.CreateInstance(collectionType);
+
+                for (var i = 0; i < faker.Random.Int(1, 5); i++)
+                {
+                    var item = Activator.CreateInstance(genericType);
+
+                    if (item != null)
+                    {
+                        collection.Add(GenerateDefaultValueDynamically(name, genericType, faker, configurations, nestedCount - 1));
+                    }
+                }
+
+                return collection;
+            }
+
+            // Handle queues
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Queue<>))
+            {
+                var genericType = type.GetGenericArguments()[0];
+                var queueType = typeof(Queue<>).MakeGenericType(genericType);
+                var queue = Activator.CreateInstance(queueType);
+
+                for (var i = 0; i < faker.Random.Int(1, 5); i++)
+                {
+                    var item = GenerateDefaultValueDynamically(name, genericType, faker, configurations, nestedCount - 1);
+                    queueType.GetMethod("Enqueue")?.Invoke(queue, new[] { item });
+                }
+                return queue;
+            }
+
+            // Handle stacks
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Stack<>))
+            {
+                var genericType = type.GetGenericArguments()[0];
+                var stackType = typeof(Stack<>).MakeGenericType(genericType);
+                var stack = Activator.CreateInstance(stackType);
+
+                for (var i = 0; i < faker.Random.Int(1, 5); i++)
+                {
+                    var item = GenerateDefaultValueDynamically(name, genericType, faker, configurations, nestedCount - 1);
+                    stackType.GetMethod("Push")?.Invoke(stack, new[] { item });
+                }
+                return stack;
+            }
+
             // Handle lists/collections
             if (typeof(IEnumerable).IsAssignableFrom(type) && type.IsGenericType)
             {
@@ -183,7 +275,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 }
                 return list;
             }
-
 
             // Handle complex objects (Ensure they are not null)
             if (type.IsClass && type != typeof(string))
@@ -204,6 +295,17 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             // Fallback to empty object instead of null
             return Activator.CreateInstance(type) ?? null;
         }
+
+        private string GetPropertyValues<T>(T instance)
+        {
+            var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var values = properties
+                .Select(p => $"{p.Name}: {p.GetValue(instance)?.ToString() ?? "null"}")
+                .ToList();
+
+            return string.Join(", ", values);
+        }
+
     }
 }
 
