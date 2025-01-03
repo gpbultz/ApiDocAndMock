@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>ApiDocAndMock</PackageId>
-	  <Version>1.2.0</Version>
+	  <Version>1.2.1</Version>
 	  <Authors>gpbultz</Authors>
 	  <Company></Company>
 	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
@@ -21,10 +21,12 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.2.0</Version>
+		<Version>1.2.1</Version>
 		<PackageReleaseNotes>
-			- Complex Types
-			- Full Unit test coverage and refactoring
+			- More Complex Types
+			- More Default Rules
+			- Clear All Default Rules and set new list with SetDefaultFakerRules
+			- Bug Fixes for Default rules property types mismatching and Default rule matching name of Class and property of another object
 		</PackageReleaseNotes>
 	</PropertyGroup>
 

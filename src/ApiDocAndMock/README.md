@@ -1,5 +1,5 @@
 
-# ApiMockDataFactory
+# ApiDocAndMock
 
 A comprehensive API mocking utility for .NET projects, leveraging the power of **Bogus** for seamless data generation.
 
@@ -84,6 +84,17 @@ builder.Services.AddDefaultFakerRules(rules =>
 });
 ```
 
+To overwrite all existing default rules, use `SetDefaultFakerRules`:
+
+```csharp
+builder.Services.SetDefaultFakerRules(defaultRules =>
+{
+    defaultRules["Name"] = faker => faker.Name.FullName();
+    defaultRules["Email"] = faker => faker.Internet.Email();
+    defaultRules["Address"] = faker => faker.Address.FullAddress();
+    defaultRules["Phone"] = faker => faker.Phone.PhoneNumber();
+});
+```
 ### Mocking Configurations
 Set up custom mocking configurations to apply specific rules to request and response objects. This ensures that objects adhere to predefined formats, with fallback defaults provided by **Bogus**.
 
@@ -113,7 +124,15 @@ builder.Services.AddMockingConfigurations(config =>
 - **ForPropertyObject**: Applies rules to a specific nested object within a response.
 - **ForPropertyObjectList**: Configures a list of nested objects with a specified number of items.
 - If a property lacks an explicit rule, a default value is assigned based on its type. Undefined types default to `null`.
+- **ForPropertyTuple**: Applies rules to a <T1,T2> tuple
+- **ForPropertyDictionary**: Applies rules to a dictionary. Supports either variables or classes for the value. In order to mock a dictionary with variables in value, set IsPrimitive to true:
+```csharp
+//generate a dictionary with string value Product Name
+.ForPropertyDictionary("Metadata", 3, faker => Guid.NewGuid(), faker => faker.Commerce.Product(), isPrimitive: true);
 
+//generate a dictionary using an Appointment object
+.ForPropertyDictionary<Guid, Appointment>("Appointments", 3, faker => Guid.NewGuid());
+```
 # OpenApiExtensions For MinimalApi endpoints
 ## Overview
 
