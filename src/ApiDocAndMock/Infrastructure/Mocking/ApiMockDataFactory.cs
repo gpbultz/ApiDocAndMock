@@ -1,6 +1,7 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Application.Models.Responses;
 using Bogus;
+using Bogus.Bson;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Collections;
@@ -91,12 +92,24 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
                 try
                 {
+
                     object value;
 
                     if (mockRules != null && mockRules.TryGetValue(property.Name, out var generator))
                     {
-                        value = generator(faker);
-                        _logger.LogDebug($"Applied configured mock rule for {property.Name} on {type.Name}. Value: {value}");
+                        var generatedValue = generator(faker);
+
+                        // Check if the generated value type matches the property type
+                        if (generatedValue != null && property.PropertyType.IsAssignableFrom(generatedValue.GetType()))
+                        {
+                            value = generatedValue;
+                            _logger.LogDebug($"Applied configured mock rule for {property.Name} on {type.Name}. Value: {value}");
+                        }
+                        else
+                        {
+                            value = GenerateDefaultValueDynamically(property.Name, property.PropertyType, faker, mockRules, nestedCount);
+                            _logger.LogDebug($"Generated default value for {property.Name} on {type.Name}. Value: {value}");
+                        }
                     }
                     else
                     {
