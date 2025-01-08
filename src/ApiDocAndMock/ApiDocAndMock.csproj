@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 	<PackageId>ApiDocAndMock</PackageId>
-	  <Version>1.2.2</Version>
+	  <Version>1.2.3</Version>
 	  <Authors>gpbultz</Authors>
 	  <Company></Company>
 	  <Description>A mocking configuration package for .NET minimal Apis with additional OpenApi documentation integration</Description>
@@ -21,7 +21,7 @@
   </PropertyGroup>
 
 	<PropertyGroup>
-		<Version>1.2.2</Version>
+		<Version>1.2.3</Version>
 		<PackageReleaseNotes>
 			- Create a mock object by type. Can now scan through mediatr commands in assembly and create dynamically
 		</PackageReleaseNotes>
