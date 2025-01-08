@@ -93,6 +93,31 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return mockObjects;
         }
 
+        public Dictionary<string, object> GetPropertyValueDictionary<T>(int nestedCount = NESTED_COUNT) where T : class
+        {
+            var result = new Dictionary<string, object>();
+
+            var properties = typeof(T)
+                .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                .Where(p => p.CanRead);
+
+            foreach (var property in properties)
+            {
+                try
+                {
+                    var value = ApplyMockRule(property, nestedCount);
+                    result[property.Name] = value;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, $"Failed to generate value for property '{property.Name}' of type '{typeof(T).Name}'.");
+                    result[property.Name] = null;
+                }
+            }
+
+            return result;
+        }
+
         private void ApplyMockRules<T>(T instance, Faker faker, int nestedCount) where T : class
         {
             if (instance == null)
@@ -149,6 +174,32 @@ namespace ApiDocAndMock.Infrastructure.Mocking
                 }
             }
         }
+
+        private object ApplyMockRule(PropertyInfo property, int nestedCount = NESTED_COUNT)
+        {
+            var faker = new Faker();
+            var propertyName = property.Name;
+            var propertyType = property.PropertyType;
+
+            var mockConfigurationsFactory = _serviceProvider.GetService<IMockConfigurationsFactory>();
+            var mockRules = mockConfigurationsFactory?.TryGetConfigurations<object>();
+
+            if (mockRules != null && mockRules.TryGetValue(propertyName, out var generator))
+            {
+                _logger.LogDebug($"Applying configured mock rule for '{propertyName}' of type '{propertyType.Name}'.");
+                return generator(faker);
+            }
+
+            _logger.LogDebug($"No specific rule for '{propertyName}'. Generating default value.");
+            return GenerateDefaultValueDynamically(
+                propertyName,
+                propertyType,
+                faker,
+                mockRules,
+                nestedCount
+            );
+        }
+
         private object GenerateDefaultValueDynamically(string name, Type type, Faker faker, Dictionary<string, Func<Faker, object>> configurations, int nestedCount = NESTED_COUNT)
         {
             if (configurations != null && configurations.TryGetValue(name, out var fakerRule))
