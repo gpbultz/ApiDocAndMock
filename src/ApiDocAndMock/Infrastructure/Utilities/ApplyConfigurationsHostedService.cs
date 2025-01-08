@@ -1,5 +1,6 @@
 ﻿using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Configurations;
+using Bogus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
@@ -27,8 +28,17 @@ namespace ApiDocAndMock.Infrastructure.Utilities
 
                 // Apply Faker Rules
                 var fakerOptions = scope.ServiceProvider.GetRequiredService<IOptions<FakerRuleOptions>>().Value;
-                var rules = factory.TryGetConfigurations<object>();  // Get default faker rules
-                fakerOptions.Configure?.Invoke(rules);
+
+                if (fakerOptions.Configure != null)
+                {
+                    var rules = new Dictionary<string, Func<Faker, object>>();
+                    fakerOptions.Configure(rules);
+
+                    foreach (var rule in rules)
+                    {
+                        factory.AddDefaultFakerRule(rule.Key, rule.Value);
+                    }
+                }
             }
 
             return Task.CompletedTask;

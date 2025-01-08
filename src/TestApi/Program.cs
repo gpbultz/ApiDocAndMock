@@ -41,6 +41,7 @@ builder.Services.AddCommonResponseConfigurations(config =>
 builder.Services.AddDefaultFakerRules(rules =>
 {
     rules["Phone"] = faker => "+44 " + faker.Phone.PhoneNumber();  // UK-specific format
+    rules["Body"] = faker => faker.Lorem.Paragraph();
 });
 
 //builder.Services.SetDefaultFakerRules(defaultRules =>
