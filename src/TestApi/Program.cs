@@ -1,6 +1,9 @@
 
+using ApiDocAndMock.Application.Interfaces;
 using ApiDocAndMock.Infrastructure.Extensions;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
+using TestApi.Application.Commands.Contacts;
 using TestApi.Application.Queries.Contacts;
 using TestApi.Application.Queries.Hotels;
 using TestApi.Domain.Entities;
@@ -15,6 +18,7 @@ builder.Services.AddMockAuthentication(authMode: ApiDocAndMock.Shared.Enums.Auth
 
 builder.Services.AddMockSwagger(includeSecurity: true, includAnnotations: true);
 builder.Services.AddMemoryDb();
+builder.Services.AddMediatR(config => config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
 builder.Services.AddCommonResponseConfigurations(config =>
 {
@@ -118,5 +122,21 @@ app.MapJwtTokenEndpoints();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+
+//using (var scope = app.Services.CreateScope())
+//{
+//    var mockFactory = scope.ServiceProvider.GetRequiredService<IApiMockDataFactory>();
+
+//    var mockCommand = mockFactory.CreateMockByType(typeof(CreateContactCommand));
+
+//    if (mockCommand is CreateContactCommand contactCommand)
+//    {
+//        Console.WriteLine($"Mock Command Created: {contactCommand.Name} | {contactCommand.Email}");
+//    }
+//    else
+//    {
+//        Console.WriteLine("Failed to create mock command.");
+//    }
+//}
 
 app.Run();

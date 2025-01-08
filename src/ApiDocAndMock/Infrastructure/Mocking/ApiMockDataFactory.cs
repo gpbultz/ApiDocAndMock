@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
@@ -48,6 +49,29 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
             _logger.LogInformation($"Successfully created mock object of type {typeof(T).Name} with hashcode {hashCode}. Properties: {propertyValues}");
 
+
+            return instance;
+        }
+
+        /// <summary>
+        /// Creates a mocked mediatr IRequest.
+        /// </summary>
+        /// <param name="requestType"></param>
+        /// <param name="nestedCount"></param>
+        /// <returns></returns>
+        public object CreateMockByType(Type requestType, int nestedCount = NESTED_COUNT)
+        {
+            var method = typeof(ApiMockDataFactory)
+                .GetMethod(nameof(CreateMockObject), BindingFlags.Public | BindingFlags.Instance)
+                .MakeGenericMethod(requestType);
+
+            // Invoke the method dynamically
+            var instance = method.Invoke(this, new object[] { nestedCount });
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException($"Failed to create mock for {requestType.Name}.");
+            }
 
             return instance;
         }
@@ -319,6 +343,53 @@ namespace ApiDocAndMock.Infrastructure.Mocking
             return string.Join(", ", values);
         }
 
+        // Handles object creation with constructor fallback
+        private object CreateInstanceWithFallback(Type type)
+        {
+            try
+            {
+                return Activator.CreateInstance(type);
+            }
+            catch
+            {
+                var constructor = type
+                    .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+                    .OrderByDescending(c => c.GetParameters().Length)
+                    .FirstOrDefault();
+
+                if (constructor != null)
+                {
+                    var args = constructor.GetParameters()
+                        .Select(p => GenerateConstructorArgument(p.ParameterType))
+                        .ToArray();
+
+                    return constructor.Invoke(args);
+                }
+            }
+
+            return null;
+        }
+
+
+        // Generate arguments for constructors dynamically
+        private object GenerateConstructorArgument(Type type)
+        {
+            var faker = new Faker();
+
+            if (type == typeof(string)) return faker.Lorem.Word();
+            if (type == typeof(int)) return faker.Random.Int(1, 1000);
+            if (type == typeof(Guid)) return Guid.NewGuid();
+            if (type == typeof(DateTime)) return faker.Date.Past();
+            if (type == typeof(bool)) return faker.Random.Bool();
+
+            // Handle complex types recursively
+            if (type.IsClass)
+            {
+                return Activator.CreateInstance(type) ?? null;
+            }
+
+            return Activator.CreateInstance(type);
+        }
     }
 }
 
