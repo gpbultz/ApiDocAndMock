@@ -24,7 +24,6 @@ namespace TestApi.Infrastructure.API.Extensions
                                         currentPage: query.Page ?? 1,
                                         resourcePath: "/contacts"
                                     );
-
                 return Results.Ok(response);
             })
             .Produces<GetContactsResponse>(200)
