@@ -342,54 +342,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
             return string.Join(", ", values);
         }
-
-        // Handles object creation with constructor fallback
-        private object CreateInstanceWithFallback(Type type)
-        {
-            try
-            {
-                return Activator.CreateInstance(type);
-            }
-            catch
-            {
-                var constructor = type
-                    .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-                    .OrderByDescending(c => c.GetParameters().Length)
-                    .FirstOrDefault();
-
-                if (constructor != null)
-                {
-                    var args = constructor.GetParameters()
-                        .Select(p => GenerateConstructorArgument(p.ParameterType))
-                        .ToArray();
-
-                    return constructor.Invoke(args);
-                }
-            }
-
-            return null;
-        }
-
-
-        // Generate arguments for constructors dynamically
-        private object GenerateConstructorArgument(Type type)
-        {
-            var faker = new Faker();
-
-            if (type == typeof(string)) return faker.Lorem.Word();
-            if (type == typeof(int)) return faker.Random.Int(1, 1000);
-            if (type == typeof(Guid)) return Guid.NewGuid();
-            if (type == typeof(DateTime)) return faker.Date.Past();
-            if (type == typeof(bool)) return faker.Random.Bool();
-
-            // Handle complex types recursively
-            if (type.IsClass)
-            {
-                return Activator.CreateInstance(type) ?? null;
-            }
-
-            return Activator.CreateInstance(type);
-        }
     }
 }
 
