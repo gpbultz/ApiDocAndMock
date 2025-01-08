@@ -1,63 +1,23 @@
 # Release 1.2.0 – Complex Type Support for Dictionary and Tuple
 
----
+# Release 1.2.2 – 
 
-## What's New
-### 🚀 Complex Type Support for Dictionary and Tuple
-- **Dictionary<TKey, TValue> Support**:  
-  - Added support for mock generation of dictionaries with either primitive or complex object values.  
-  - If the value type (`TValue`) is a complex object, its faker rules are applied automatically if a configuration exists.  
-  - This eliminates the need to redefine faker rules for each dictionary—simply register the object configuration once.  
 
-  **Example:**  
-  ```csharp
-  config.RegisterConfiguration<Appointment>(cfg =>
-  {
-      cfg
-          .ForProperty("DateOfAppointment", faker => faker.Date.Future())
-          .ForProperty("Description", faker => "Meeting about " + faker.Company.CatchPhrase());
-  });
-
-  config.RegisterConfiguration<GetContactsResponse>(cfg =>
-  {
-      cfg
-          .ForPropertyObjectList<GetContactByIdResponse>("Contacts", 5)
-          .ForPropertyDictionary<Guid, Appointment>("Appointments", 3,
-              faker => Guid.NewGuid(),
-              faker => ServiceProviderHelper.GetService<IApiMockDataFactory>().CreateMockObject<Appointment>());
-  });
-  ```
-
-- **Tuple<T1, T2> Support**:  
-  - Introduced support for `Tuple<T1, T2>` properties within mock configurations.  
-  - The configuration can apply faker rules to both tuple values individually.  
-
-  **Example:**  
-  ```csharp
-  config.RegisterConfiguration<Location>(cfg =>
-  {
-      cfg
-          .ForPropertyTuple("Coordinates",
-              faker => faker.Random.Double(0, 100),
-              faker => faker.Random.Double(0, 100));
-  });
-  ```
+### New: `CreateMockByType` Method  
+- Introduced the `CreateMockByType` method, allowing for the **dynamic creation of MediatR commands and other types at runtime** without requiring generic type parameters (`<T>`).  
+- This enhancement leverages **reflection** to invoke the existing `CreateMockObject<T>` method dynamically, ensuring that types are **fully instantiated and populated with mock data** even when the type is passed as a parameter (e.g., `typeof(CreateContactCommand)`).  
+- The method simplifies testing and mocking scenarios by allowing dynamic generation of MediatR request objects, making it easier to **simulate workflows** and **populate complex types** without direct instantiation.  
 
 ---
 
-## Improvements
-- **Streamlined Dictionary Handling**:  
-  - Complex object values in dictionaries are created via `IApiMockDataFactory` automatically.  
-  - Simplified configuration logic to reduce redundant code for nested objects.  
+###  Example Usage:  
+```csharp
+var mockCommand = _mockFactory.CreateMockByType(typeof(CreateContactCommand));
 
-- **Enhanced Error Handling**:  
-  - Improved error messages for invalid dictionary configurations or missing faker rules.  
-
----
-
-## Unit Test Coverage
-- **Comprehensive Tests**:  
-  - Full test coverage for dictionaries with primitive and complex values.  
-  - Validation of tuple generation with faker rules applied to both items.  
-  - Mocking configurations tested for various property combinations, including nested lists, objects, and dictionaries.  
-
+if (mockCommand is CreateContactCommand contact)
+{
+    Console.WriteLine($"Mocked Name: {contact.Name}");
+    Console.WriteLine($"Mocked Email: {contact.Email}");
+    Console.WriteLine($"Mocked Phone: {contact.Phone}");
+}
+```

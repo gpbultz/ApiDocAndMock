@@ -8,6 +8,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Runtime.Serialization;
 
 namespace ApiDocAndMock.Infrastructure.Mocking
 {
@@ -48,6 +49,29 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
             _logger.LogInformation($"Successfully created mock object of type {typeof(T).Name} with hashcode {hashCode}. Properties: {propertyValues}");
 
+
+            return instance;
+        }
+
+        /// <summary>
+        /// Creates a mocked mediatr IRequest.
+        /// </summary>
+        /// <param name="requestType"></param>
+        /// <param name="nestedCount"></param>
+        /// <returns></returns>
+        public object CreateMockByType(Type requestType, int nestedCount = NESTED_COUNT)
+        {
+            var method = typeof(ApiMockDataFactory)
+                .GetMethod(nameof(CreateMockObject), BindingFlags.Public | BindingFlags.Instance)
+                .MakeGenericMethod(requestType);
+
+            // Invoke the method dynamically
+            var instance = method.Invoke(this, new object[] { nestedCount });
+
+            if (instance == null)
+            {
+                throw new InvalidOperationException($"Failed to create mock for {requestType.Name}.");
+            }
 
             return instance;
         }
@@ -318,7 +342,6 @@ namespace ApiDocAndMock.Infrastructure.Mocking
 
             return string.Join(", ", values);
         }
-
     }
 }
 
